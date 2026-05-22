@@ -1,80 +1,96 @@
 # ModarBot
 
-**Catch the raid before it catches you.**
+> **Catch the raid before it catches you.**
 
-A real-time anomaly detector for subreddits, built on Devvit. ModarBot watches your sub for brigades, sock-puppet attacks, coordinated spam, and traffic anomalies — and alerts your mod team the moment something is wrong.
+Real-time anomaly detector for subreddits, built on [Devvit](https://developers.reddit.com/docs). ModarBot watches your sub's live event stream and lights up the moment a brigade, sock-puppet wave, or coordinated spam attack starts — so your mod team responds in seconds, not hours.
 
-Submission for the [Reddit Mod Tools and Migrated Apps Hackathon](https://mod-tools-migration.devpost.com/) — _New Mod Tool_ category.
+[![Hackathon](https://img.shields.io/badge/Reddit_Mod_Tools_Hackathon-2026-FF4500?style=flat-square)](https://mod-tools-migration.devpost.com/)
+[![Devvit](https://img.shields.io/badge/Built_on-Devvit_Web-FF4500?style=flat-square)](https://developers.reddit.com/docs)
+[![No AI](https://img.shields.io/badge/AI-not_used-22c55e?style=flat-square)](docs/IDEA.md)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue?style=flat-square)](LICENSE)
 
 ---
 
-## The pitch
+## The problem
 
-Every active subreddit has been brigaded, raided, or hit by a coordinated spam wave at some point. None of them saw it coming. Mods discover the damage hours later — sometimes only after a user DMs them or the sub trends for the wrong reason.
+Every active subreddit has been brigaded, raided, or hit by coordinated spam at some point. None of them saw it coming. Mods discover the damage hours later — usually after a user complaint or when the post is already buried under 200 hostile comments.
 
-ModarBot makes the invisible visible. It runs in the background, continuously analyzes the sub's live event stream with simple statistical detectors (no AI, no external APIs, no cost), and lights up the moment patterns diverge from baseline.
+There is no real-time signal. AutoMod matches keywords on a single item. Crowd Control is blunt and global. Toolbox shows per-user history. Nothing watches the **wave**.
 
-## What it does
+## What ModarBot does
 
-### Signal pipeline
+Six independent statistical detectors continuously analyze the sub's live stream:
 
-A bundle of independent detectors watches the sub:
+| Detector | What it catches |
+|---|---|
+| 🆕 **Account-age anomaly** | Sudden flood of new accounts (<30 days) posting in the sub |
+| 🚨 **Report storm** | Many distinct reports against one user in a short window |
+| 📉 **Vote-pattern anomaly** | Post ratios diverging from the sub's typical curve |
+| 💬 **Comment cascade** | Sudden spike in comment velocity on a single thread |
+| 🔗 **Cross-post influx** | Bursts of referral traffic from external subs |
+| 👥 **New-account cluster** | Accounts created within days of each other active in the same thread |
 
-- **Account-age anomaly** — sudden flood of new accounts (<30 days) posting in the sub
-- **Report storm** — many new reports against a single user in a short window
-- **Vote-pattern anomaly** — post ratios diverging from the sub's typical curve at a given post age
-- **Comment cascade** — sudden spike in comment velocity/depth on a single thread
-- **Cross-post influx** — bursts of referral traffic from external subs
-- **New-account cluster** — multiple accounts created within days of each other posting in the same thread
+Each detector emits an `AnomalyEvent` with severity (0–1) and a plain-English reason. No AI. No external APIs. Just math.
 
-Each detector is independent. Each emits an event with a severity score and a plain-English reason.
+## The Watchtower
 
-### Watchtower custom post
+A custom post in your mod-only area:
 
-A sticky custom post in your mod-only area:
+- **Status orb** — single 🟢 / 🟡 / 🔴 glance at sub health
+- **Live anomaly feed** — last 10 events, severity bars, time-ago, one-tap **Investigate** / **Dismiss**
+- **Drill-down** — surfaces the offending accounts and posts with one-click bulk actions (ban all, remove all, lock thread) — _always with an explicit mod confirmation_
+- **Settings** — per-signal sensitivity sliders, mute schedules, alert channel
 
-- **Status orb** — single green/yellow/red glance at sub health
-- **Live anomaly feed** — last 10 events with severity, type, time, "Investigate" button
-- **Drill-down** — opens a filtered view of the offending accounts and posts with one-click bulk actions (ban all, remove all, lock thread)
-- **Settings tab** — per-signal sensitivity sliders, mute schedules, alert delivery channel
+When severity crosses your threshold, the team gets a modmail or push notification. Severity below threshold? Silent — no spam.
 
-### Realtime alerts
+## Why ModarBot wins
 
-Detectors publish to a Devvit Realtime channel. Mods on shift see the Watchtower light up in real time. When severity exceeds the sub's threshold, modmail or push notification fires team-wide.
+| | |
+|---|---|
+| **Universal pain** | Every active sub has been raided. Current detection time: hours. ModarBot: seconds. |
+| **$0 forever** | Pure Devvit infrastructure. No AI, no API keys, no publisher cost. Sustainable from day one. |
+| **No competitor** | Nothing on Devvit, in Toolbox, in fsvreddit's ecosystem, or among PRAW bots covers cross-account real-time anomaly detection. |
+| **Mobile-native** | Devvit Web app — works wherever Reddit works. Toolbox is desktop-only. |
+| **Showcases Devvit Realtime** | Built around Reddit's pub/sub primitive. |
 
-## Why ModarBot
+## Tech stack
 
-|                               |                                                                                                                                  |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Universal pain**            | Every active sub has been raided. The current solution is "find out an hour later from a user complaint."                        |
-| **No cost, ever**             | Pure statistical detection on Devvit infrastructure. No AI. No external APIs. No publisher key burden. Sustainable from day one. |
-| **No competition**            | Zero existing solutions on Devvit, in Toolbox, in the fsvreddit ecosystem, or among PRAW bots.                                   |
-| **Mobile-native**             | Devvit Web app — works wherever Reddit works. Toolbox is desktop-only.                                                           |
-| **Showcases Devvit Realtime** | Built around Reddit's pub/sub primitive — a feature Reddit's team wants developers using.                                        |
+- **Devvit Web** — React 19 + Vite + Tailwind 4 (webview)
+- **Hono** server + tRPC v11 (serverless Node 22)
+- **Devvit Realtime** — anomaly publish/subscribe per sub
+- **Devvit Redis** — 24h rolling event log + EWMA baselines
 
-## Stack
+## Repo layout
 
-- [Devvit](https://developers.reddit.com/docs) — Reddit Developer Platform
-- Devvit Web (webview + React + TypeScript)
-- Devvit Realtime (pub/sub for live alarms)
-- Devvit Redis (event log + rolling baselines)
+```
+├── src/
+│   ├── server/             # Hono routes, detectors, ingest, Redis storage
+│   │   ├── detectors/      # One file per anomaly detector
+│   │   ├── ingest/         # Reddit event → RawEvent normalization
+│   │   ├── realtime/       # Realtime publish helpers
+│   │   ├── routes/         # /api + /internal triggers + menu
+│   │   └── storage/        # Redis key conventions, baselines, events
+│   ├── client/             # React Watchtower UI (splash + game webviews)
+│   └── shared/             # Types shared between client and server
+├── docs/                   # IDEA, ARCHITECTURE, PROGRESS, HACKATHON rules
+├── devvit.json             # Devvit app config (triggers, menu, entrypoints)
+└── package.json
+```
+
+## Documentation
+
+- **[docs/IDEA.md](docs/IDEA.md)** — full concept, pain evidence, why no-AI is a feature, competitor analysis
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — signal pipeline, Realtime bus, Redis schema, failure modes
+- **[docs/PROGRESS.md](docs/PROGRESS.md)** — running build log
+- **[docs/HACKATHON.md](docs/HACKATHON.md)** — hackathon rules, dates, submission requirements
+- **[CLAUDE.md](CLAUDE.md)** — onboarding for AI coding sessions
 
 ## Status
 
-See [docs/PROGRESS.md](docs/PROGRESS.md) for the running build log.
+🚧 In active development for the [Reddit Mod Tools and Migrated Apps Hackathon 2026](https://mod-tools-migration.devpost.com/) (deadline **May 27, 2026**).
 
-## A note on naming
+App listing will go live at `developers.reddit.com/apps/modarbot` once published.
 
-- **Brand (everywhere user-facing):** **ModarBot** — README, demo video, App Directory listing, submission copy. Always CamelCase.
-- **Technical identifier:** `modarbot` (lowercase) — App Directory URL slug, npm package name, folder name. Only appears in URLs and code.
-- **Test subreddit:** `r/ModarBotTest` — the playtest community used during development and judging.
+## License
 
-Single rule: capitalize **ModarBot** for humans, lowercase **modarbot** for machines.
-
-## Docs
-
-- [docs/HACKATHON.md](docs/HACKATHON.md) — hackathon rules, dates, submission requirements
-- [docs/IDEA.md](docs/IDEA.md) — full concept, pain evidence, competitor analysis
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — signal pipeline, Realtime bus, dashboard design
-- [docs/PROGRESS.md](docs/PROGRESS.md) — running build log
-- [CLAUDE.md](CLAUDE.md) — onboarding for Claude Code sessions on this repo
+[BSD-3-Clause](LICENSE) — the Devvit template default. Use it, fork it, build on it.
