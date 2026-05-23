@@ -4,12 +4,14 @@ import { detectAccountAge } from './account-age';
 import { detectReportStorm } from './report-storm';
 import { detectCommentCascade } from './comment-cascade';
 import { detectNewAccountCluster } from './new-account-cluster';
+import { detectCrossPostInflux } from './cross-post-influx';
 
 const allDetectors = [
   detectAccountAge,
   detectReportStorm,
   detectCommentCascade,
   detectNewAccountCluster,
+  detectCrossPostInflux,
 ];
 
 export const runDetectors = async (

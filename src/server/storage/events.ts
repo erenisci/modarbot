@@ -9,6 +9,8 @@ export type RawEvent =
       authorCreatedAt: number;
       postedAt: number;
       threadId: string;
+      url?: string;
+      crosspostParentId?: string;
     }
   | {
       kind: 'comment';

@@ -2,6 +2,13 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (Day 2 — late late)
+
+- **5th detector live: `cross-post-influx.ts`.** Counts posts whose `url` references an external subreddit or whose `crosspostParentId` is set, in a 15-min rolling window. Computes the inbound share, compares against an EWMA baseline + 3σ. Fires when current share exceeds baseline + 3σ.
+- **Post ingest** widened: `RawEvent['post']` now carries optional `url` + `crosspostParentId`; `ingestPostSubmit` extracts them from the Devvit payload when present.
+- **Detector registry** now ships five active detectors (account-age, report-storm, comment-cascade, new-account-cluster, cross-post-influx). Sixth (vote-pattern) intentionally deferred to v2 — requires a Devvit Scheduler poll because triggers don't fire on vote changes; the four high-confidence signals plus cross-post inflow cover the demo and the brigade narrative.
+- **Type-check:** clean.
+
 ## 2026-05-23 (Day 2 — late)
 
 - **Demo trigger:** new `POST /api/demo/trigger` (in `server/routes/demo.ts`, mounted as `/api/demo`). Synthesizes an `AnomalyEvent` with a fixed severity (0.85 default), runs the publish + dispatch pipeline. Lets the demo video record a deterministic alarm without staging a real brigade.

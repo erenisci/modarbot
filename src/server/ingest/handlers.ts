@@ -12,6 +12,8 @@ type PostRef = {
   authorId?: string;
   author?: string;
   createdAt?: number | string;
+  url?: string;
+  crosspostParentId?: string;
 };
 
 const toMs = (raw: number | string | undefined): number => {
@@ -40,6 +42,8 @@ export const ingestPostSubmit = async (
     authorCreatedAt: authorCreatedAt(p.author),
     postedAt: toMs(p.post.createdAt) || Date.now(),
     threadId: p.post.id,
+    url: p.post.url,
+    crosspostParentId: p.post.crosspostParentId,
   };
   await appendEvent(sub, event);
 };
