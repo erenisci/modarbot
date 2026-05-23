@@ -70,15 +70,15 @@ Each detector is a pure function: `(eventLog, baselines, settings) → AnomalyEv
 | ------------------------ | -------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `account_age.ts`         | Account-age anomaly  | Last 10 min of post/comment events, baseline % new-account share | Window share > baseline + Nσ                                             |
 | `report_storm.ts`        | Report storm         | Last 15 min of report events grouped by target user              | Distinct reporters ≥ threshold                                           |
-| `vote_pattern.ts`        | Vote-pattern anomaly | Vote snapshots for posts < 24h old                               | Ratio divergence > tolerance at post-age curve                           |
+| `vote_pattern.ts`        | Vote-pattern anomaly | Per-post snapshots from `storage/vote-snapshots` (Scheduler tick)| Ratio drops ≥0.2 between snapshots ≥5 min apart, post age < 12 h         |
 | `comment_cascade.ts`     | Comment cascade      | Comments/min on each active post vs same post's last 30-min rate | Burst factor ≥ threshold                                                 |
 | `cross_post_influx.ts`   | Cross-post influx    | Comments referencing the sub from outside                        | Window count > baseline + Nσ                                             |
 | `new_account_cluster.ts` | New-account cluster  | Active threads, posters' account creation dates                  | ≥ 4 accounts within 14d of each other active in one thread within 30 min |
 
 The pipeline runs:
 
-- Synchronously on every event ingestion (for cheap detectors)
-- On a Devvit Scheduler tick (every 60s) for cross-thread/aggregate detectors
+- Synchronously on every event ingestion (5 of 6 detectors run here)
+- On a Devvit Scheduler tick every 2 minutes for `vote_pattern`, which depends on per-post upvote-ratio snapshots fetched via `reddit.getNewPosts` (Devvit triggers do not fire on votes)
 
 Each `AnomalyEvent` is deduped against recent events (don't refire the same alarm every 60s) and written to a "live anomalies" Redis sorted set keyed by sub.
 

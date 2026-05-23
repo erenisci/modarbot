@@ -2,11 +2,21 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (Day 2 — final)
+
+- **6th detector live: `vote-pattern.ts`** — fires when a post's upvote ratio drops by ≥0.2 between snapshots ≥5 min apart, post age <12h, score ≥5. Per-post comparison, not sub-wide. Severity scales with the size of the ratio drop.
+- **Devvit Scheduler wired:** `devvit.json` registers `scheduler.tasks.vote-snapshot` with cron `*/2 * * * *` mapped to `/internal/scheduler/vote-snapshot`. Schema verified against `@devvit/shared-types/schemas/config-file.v1.json` (bundled in node_modules).
+- **`server/routes/scheduler.ts`** — fetches up to 30 newest posts via `reddit.getNewPosts({ subreddit, limit: 30 }).all()`, builds `VoteSnapshot[]`, loads previous snapshots from Redis hash, runs `detectVotePattern` to find fresh anomalies, saves the new snapshots, publishes + dispatches alerts. Short-circuits when ModarBot is disabled in settings.
+- **`server/storage/vote-snapshots.ts`** — Redis hash (`modarbot:{sub}:vote-snapshots`) keyed by postId. 24h TTL with lazy cleanup on read.
+- **`server/index.ts`** mounts `/internal/scheduler`.
+- **Detector registry note:** vote-pattern is **not** in `detectors/index.ts` (the event-driven cycle); it runs only inside the scheduler tick because it depends on snapshot storage that only the scheduler maintains. All 5 other detectors stay in the registry.
+- **Type-check:** clean.
+
 ## 2026-05-23 (Day 2 — late late)
 
 - **5th detector live: `cross-post-influx.ts`.** Counts posts whose `url` references an external subreddit or whose `crosspostParentId` is set, in a 15-min rolling window. Computes the inbound share, compares against an EWMA baseline + 3σ. Fires when current share exceeds baseline + 3σ.
 - **Post ingest** widened: `RawEvent['post']` now carries optional `url` + `crosspostParentId`; `ingestPostSubmit` extracts them from the Devvit payload when present.
-- **Detector registry** now ships five active detectors (account-age, report-storm, comment-cascade, new-account-cluster, cross-post-influx). Sixth (vote-pattern) intentionally deferred to v2 — requires a Devvit Scheduler poll because triggers don't fire on vote changes; the four high-confidence signals plus cross-post inflow cover the demo and the brigade narrative.
+- **Detector registry** now ships five active event-driven detectors (account-age, report-storm, comment-cascade, new-account-cluster, cross-post-influx). The 6th (vote-pattern) runs on a separate Devvit Scheduler tick — see the "Day 2 — final" entry above.
 - **Type-check:** clean.
 
 ## 2026-05-23 (Day 2 — late)

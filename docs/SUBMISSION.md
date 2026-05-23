@@ -30,7 +30,8 @@ ModarBot is a Devvit Web app that watches a subreddit's live event stream and al
    - **Report storm** — ≥5 distinct reporters against one user in 15 min
    - **Comment cascade** — single thread's comment velocity spikes ≥5× its baseline
    - **New-account cluster** — ≥4 accounts created within 14 days of each other active in the same thread
-   - (v2 roadmap: vote-pattern anomaly, cross-post influx)
+   - **Cross-post influx** — burst of inbound posts referencing external subreddits vs the sub's baseline (EWMA + 3σ)
+   - **Vote-pattern anomaly** — per-post upvote ratio drops ≥20 points between Scheduler snapshots (every 2 min, post age < 12 h)
 3. **Watchtower custom post.** A sticky mod-only post is created on app install. It shows a status orb (green/yellow/red), a live anomaly feed, and a settings panel. Mods click **Investigate** on any row to open a drill-down modal with the offending accounts, posts, and threads, plus one-click bulk actions (ban, remove, lock) — **always with explicit confirm**.
 4. **Realtime alerts.** Fresh anomalies publish on the per-sub `modarbot:{sub}` Devvit Realtime channel, updating the Watchtower in milliseconds. When severity crosses the sub-configured threshold for that signal, ModarBot also sends a throttled modmail (one per anomaly type per 10 min) so mods who aren't watching the Watchtower still get pinged.
 5. **Settings.** Mods tune per-signal sensitivity sliders, pick the alert channel (modmail / push / both / silent), and can pause ModarBot entirely. All settings persist per-sub in Redis.

@@ -36,6 +36,14 @@
     "onCommentReport": "/internal/triggers/on-comment-report",
     "onModAction": "/internal/triggers/on-mod-action"
   },
+  "scheduler": {
+    "tasks": {
+      "vote-snapshot": {
+        "endpoint": "/internal/scheduler/vote-snapshot",
+        "cron": "*/2 * * * *"
+      }
+    }
+  },
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build"

@@ -25,7 +25,7 @@ Six independent statistical detectors continuously analyze the sub's live stream
 |---|---|
 | 🆕 **Account-age anomaly** | Sudden flood of new accounts (<30 days) posting in the sub |
 | 🚨 **Report storm** | Many distinct reports against one user in a short window |
-| 📉 **Vote-pattern anomaly** | Post ratios diverging from the sub's typical curve |
+| 📉 **Vote-pattern anomaly** | Post upvote ratio dropping sharply between scheduled snapshots |
 | 💬 **Comment cascade** | Sudden spike in comment velocity on a single thread |
 | 🔗 **Cross-post influx** | Bursts of referral traffic from external subs |
 | 👥 **New-account cluster** | Accounts created within days of each other active in the same thread |
