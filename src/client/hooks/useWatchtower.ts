@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { connectRealtime, disconnectRealtime } from '@devvit/web/client';
-import type { AnomalyEvent, SubSettings, WatchtowerState } from '../../shared/api';
+import type {
+  AnomalyEvent,
+  AnomalyType,
+  SubSettings,
+  WatchtowerState,
+} from '../../shared/api';
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -102,6 +107,18 @@ export const useWatchtower = () => {
     await fetchState();
   };
 
+  const fireDemoAlarm = async (
+    type: AnomalyType = 'comment_cascade',
+    severity = 0.85
+  ) => {
+    await fetch('/api/demo/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, severity }),
+    });
+    await fetchState();
+  };
+
   return {
     status,
     state,
@@ -111,5 +128,6 @@ export const useWatchtower = () => {
     actionTaken,
     bulkAction,
     saveSettings,
+    fireDemoAlarm,
   };
 };

@@ -17,8 +17,16 @@ const formatLearningCountdown = (until: number): string => {
 };
 
 export const App = () => {
-  const { status, state, error, dismiss, actionTaken, bulkAction, saveSettings } =
-    useWatchtower();
+  const {
+    status,
+    state,
+    error,
+    dismiss,
+    actionTaken,
+    bulkAction,
+    saveSettings,
+    fireDemoAlarm,
+  } = useWatchtower();
   const [drillDown, setDrillDown] = useState<AnomalyEvent | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -127,6 +135,7 @@ export const App = () => {
           current={state.settings}
           onClose={() => setSettingsOpen(false)}
           onSave={saveSettings}
+          onFireDemo={fireDemoAlarm}
         />
       )}
     </div>

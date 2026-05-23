@@ -47,12 +47,12 @@ export type SubSettings = {
 
 export const DEFAULT_SETTINGS: SubSettings = {
   thresholds: {
-    account_age: 0.5,
-    report_storm: 0.5,
+    account_age: 0.35,
+    report_storm: 0.3,
     vote_pattern: 0.5,
-    comment_cascade: 0.5,
+    comment_cascade: 0.3,
     cross_post_influx: 0.5,
-    new_account_cluster: 0.5,
+    new_account_cluster: 0.3,
   },
   alertChannel: 'modmail',
   enabled: true,

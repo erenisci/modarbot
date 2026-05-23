@@ -2,6 +2,16 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (Day 2 — late)
+
+- **Demo trigger:** new `POST /api/demo/trigger` (in `server/routes/demo.ts`, mounted as `/api/demo`). Synthesizes an `AnomalyEvent` with a fixed severity (0.85 default), runs the publish + dispatch pipeline. Lets the demo video record a deterministic alarm without staging a real brigade.
+- **Settings panel** got a "Demo / debug" section with four buttons (Fire account-age / report-storm / comment-cascade / new-account-cluster). Hidden when `onFireDemo` callback isn't passed.
+- **Default threshold tuning:** lowered the per-signal defaults (`account_age` 0.35, `report_storm` 0.3, `comment_cascade` 0.3, `new_account_cluster` 0.3) so a small test sub's real activity has a fighting chance of firing on day-one playtests. Higher-confidence v2 detectors (`vote_pattern`, `cross_post_influx`) stay at 0.5.
+- **useWatchtower** exposes `fireDemoAlarm(type, severity)` which the SettingsPanel consumes.
+- **Server `index.ts`** mounts the demo router under `/api/demo`.
+- **Type-check:** clean.
+- **Status:** Day 2 + polish features all in place. App is shippable; remaining work is publish + record + submit. Manual playtest is the gate before that.
+
 ## 2026-05-23 (Day 2)
 
 - **3 new detectors:**

@@ -15,10 +15,12 @@ export const SettingsPanel = ({
   current,
   onClose,
   onSave,
+  onFireDemo,
 }: {
   current: SubSettings;
   onClose: () => void;
   onSave: (settings: SubSettings) => Promise<void>;
+  onFireDemo?: (type: AnomalyType, severity: number) => Promise<void>;
 }) => {
   const [draft, setDraft] = useState<SubSettings>({
     ...current,
@@ -132,6 +134,28 @@ export const SettingsPanel = ({
               Lower = more sensitive (more alerts). Higher = stricter.
             </p>
           </section>
+
+          {onFireDemo && (
+            <section className="border-t border-gray-800 pt-4">
+              <div className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+                Demo / debug
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Fire a synthetic anomaly to verify the alert pipeline end-to-end.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(['comment_cascade', 'new_account_cluster', 'report_storm', 'account_age'] as AnomalyType[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => void onFireDemo(t, 0.85)}
+                    className="text-xs px-3 py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                  >
+                    Fire {ANOMALY_LABELS[t]}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         <div className="p-5 border-t border-gray-800 bg-gray-900/60 flex justify-end gap-2">
