@@ -53,6 +53,14 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 | **Mobile-native**             | Devvit Web app — works wherever Reddit works. Toolbox is desktop-only.                                                        |
 | **Showcases Devvit Realtime** | Built around Reddit's pub/sub primitive.                                                                                      |
 
+## Screenshots
+
+_To capture during playtest in `r/ModarBotTest`:_
+
+| Splash (feed view) | Watchtower (expanded) | Drill-down + bulk action |
+| --- | --- | --- |
+| ![Splash](docs/screenshots/splash.png) | ![Watchtower](docs/screenshots/watchtower.png) | ![Drill-down](docs/screenshots/drilldown.png) |
+
 ## Tech stack
 
 - **Devvit Web** — React 19 + Vite + Tailwind 4 (webview)

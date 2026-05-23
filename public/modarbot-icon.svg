@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="modarbot-icon-title">
+  <title id="modarbot-icon-title">ModarBot Watchtower icon</title>
+  <defs>
+    <radialGradient id="orb" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="60%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#9f1239" />
+    </radialGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2937" />
+      <stop offset="100%" stop-color="#0b1220" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#0b1220" />
+  <circle cx="128" cy="92" r="46" fill="url(#orb)" />
+  <circle cx="128" cy="92" r="46" fill="none" stroke="#fecdd3" stroke-opacity="0.35" stroke-width="2" />
+  <path d="M82 144 L174 144 L182 168 L74 168 Z" fill="url(#tower)" />
+  <rect x="100" y="168" width="56" height="56" fill="url(#tower)" />
+  <rect x="118" y="190" width="20" height="34" fill="#0b1220" />
+  <circle cx="128" cy="92" r="62" fill="none" stroke="#f43f5e" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="4 6" />
+  <circle cx="128" cy="92" r="78" fill="none" stroke="#f43f5e" stroke-opacity="0.18" stroke-width="2" stroke-dasharray="2 8" />
+</svg>
