@@ -5,8 +5,11 @@ import { createRoot } from 'react-dom/client';
 import type { AnomalyEvent } from '../shared/api';
 import { AnomalyRow } from './components/AnomalyRow';
 import { DrillDown } from './components/DrillDown';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SettingsPanel } from './components/SettingsPanel';
 import { StatusOrb } from './components/StatusOrb';
+import { Toast } from './components/Toast';
+import { useToast } from './hooks/useToast';
 import { useWatchtower } from './hooks/useWatchtower';
 
 const formatLearningCountdown = (until: number): string => {
@@ -16,7 +19,27 @@ const formatLearningCountdown = (until: number): string => {
   return `${hrs}h until full coverage`;
 };
 
+const LoadingSkeleton = () => (
+  <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="max-w-2xl mx-auto px-5 py-8 flex flex-col gap-6">
+      <header className="flex flex-col gap-2">
+        <div className="h-8 w-2/3 bg-gray-800/60 rounded animate-pulse" />
+        <div className="h-4 w-1/3 bg-gray-800/40 rounded animate-pulse" />
+      </header>
+      <section className="flex flex-col items-center py-6 gap-3">
+        <div className="w-32 h-32 rounded-full bg-gray-800/60 animate-pulse" />
+        <div className="h-4 w-32 bg-gray-800/40 rounded animate-pulse" />
+      </section>
+      <section className="flex flex-col gap-3">
+        <div className="h-16 bg-gray-900/40 border border-dashed border-gray-800 rounded-lg animate-pulse" />
+        <div className="h-16 bg-gray-900/40 border border-dashed border-gray-800 rounded-lg animate-pulse" />
+      </section>
+    </div>
+  </div>
+);
+
 export const App = () => {
+  const { toast, show } = useToast();
   const {
     status,
     state,
@@ -30,20 +53,16 @@ export const App = () => {
   const [drillDown, setDrillDown] = useState<AnomalyEvent | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  if (status === 'loading') {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-300">
-        Loading ModarBot Watchtower…
-      </div>
-    );
-  }
+  if (status === 'loading') return <LoadingSkeleton />;
 
   if (status === 'error' || !state) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950 text-rose-300">
         <div className="max-w-md text-center">
           <div className="font-semibold mb-2">Watchtower offline</div>
-          <div className="text-sm text-rose-200/70">{error ?? 'Unknown error'}</div>
+          <div className="text-sm text-rose-200/70">
+            {error ?? 'Unknown error'}
+          </div>
         </div>
       </div>
     );
@@ -52,12 +71,42 @@ export const App = () => {
   const active = state.anomalies.filter((a) => a.status === 'active');
   const handled = state.anomalies.filter((a) => a.status !== 'active');
 
+  const handleDismiss = async (anomaly: AnomalyEvent) => {
+    await dismiss(anomaly);
+    show('Anomaly dismissed', 'info');
+  };
+
+  const handleBulk = async (
+    anomaly: AnomalyEvent,
+    action: 'ban' | 'remove' | 'lock'
+  ) => {
+    await bulkAction(anomaly, action);
+    await actionTaken(anomaly);
+    show(`${action} action applied`, 'success');
+  };
+
+  const handleSaveSettings = async (settings: typeof state.settings) => {
+    await saveSettings(settings);
+    show('Settings saved', 'success');
+  };
+
+  const handleFireDemo: typeof fireDemoAlarm = async (type, severity) => {
+    try {
+      await fireDemoAlarm(type, severity);
+      show('Synthetic alarm fired', 'info');
+    } catch {
+      show('Slow down — demo throttled', 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <div className="max-w-2xl mx-auto px-5 py-8 flex flex-col gap-6">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">ModarBot Watchtower</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              ModarBot Watchtower
+            </h1>
             <p className="text-sm text-gray-400">
               r/{state.subredditName}
               {state.modUser ? ` · ${state.modUser}` : ''}
@@ -97,8 +146,8 @@ export const App = () => {
           </div>
           {state.anomalies.length === 0 ? (
             <div className="border border-dashed border-gray-800 rounded-lg p-6 text-center text-gray-500 text-sm">
-              No anomalies yet. ModarBot will surface unusual patterns the moment
-              they appear.
+              No anomalies yet. ModarBot will surface unusual patterns the
+              moment they appear.
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -106,7 +155,7 @@ export const App = () => {
                 <AnomalyRow
                   key={anomaly.id}
                   anomaly={anomaly}
-                  onDismiss={() => dismiss(anomaly)}
+                  onDismiss={() => handleDismiss(anomaly)}
                   onAction={() => setDrillDown(anomaly)}
                 />
               ))}
@@ -123,10 +172,7 @@ export const App = () => {
         <DrillDown
           anomaly={drillDown}
           onClose={() => setDrillDown(null)}
-          onBulkAction={async (action) => {
-            await bulkAction(drillDown, action);
-            await actionTaken(drillDown);
-          }}
+          onBulkAction={(action) => handleBulk(drillDown, action)}
         />
       )}
 
@@ -134,16 +180,20 @@ export const App = () => {
         <SettingsPanel
           current={state.settings}
           onClose={() => setSettingsOpen(false)}
-          onSave={saveSettings}
-          onFireDemo={fireDemoAlarm}
+          onSave={handleSaveSettings}
+          onFireDemo={handleFireDemo}
         />
       )}
+
+      <Toast toast={toast} />
     </div>
   );
 };
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 );

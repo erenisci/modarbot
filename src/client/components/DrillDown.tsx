@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AnomalyEvent, BulkAction } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
+import { useModal } from '../hooks/useModal';
 
 export const DrillDown = ({
   anomaly,
@@ -11,6 +12,7 @@ export const DrillDown = ({
   onClose: () => void;
   onBulkAction: (action: BulkAction) => Promise<void>;
 }) => {
+  const { dialogProps, titleId } = useModal(onClose);
   const [confirming, setConfirming] = useState<BulkAction | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,14 +32,21 @@ export const DrillDown = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-lg max-w-lg w-full max-h-[85vh] overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+    >
+      <div
+        {...dialogProps}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-gray-900 border border-gray-700 rounded-lg max-w-[calc(100vw-2rem)] sm:max-w-lg w-full max-h-[85vh] overflow-y-auto"
+      >
         <div className="p-5 border-b border-gray-800 flex items-start justify-between gap-3">
           <div>
             <div className="text-xs uppercase tracking-wider text-rose-400 mb-1">
               Investigate
             </div>
-            <h2 className="text-lg font-semibold text-gray-100">
+            <h2 id={titleId} className="text-lg font-semibold text-gray-100">
               {ANOMALY_LABELS[anomaly.type]}
             </h2>
             <p className="text-sm text-gray-400 mt-1">{anomaly.reason}</p>
@@ -131,14 +140,18 @@ export const DrillDown = ({
                   disabled={busy}
                   className="text-sm px-3 py-2 rounded bg-blue-500/15 hover:bg-blue-500/25 text-blue-200 border border-blue-500/40 disabled:opacity-50"
                 >
-                  Lock {threads.length === 1 ? 'thread' : `${threads.length} threads`}
+                  Lock{' '}
+                  {threads.length === 1
+                    ? 'thread'
+                    : `${threads.length} threads`}
                 </button>
               )}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-amber-200">
-                Confirm: <strong>{confirming}</strong> action will execute immediately and cannot be undone in bulk.
+                Confirm: <strong>{confirming}</strong> action will execute
+                immediately and cannot be undone in bulk.
               </p>
               <div className="flex gap-2">
                 <button

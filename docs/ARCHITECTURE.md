@@ -210,15 +210,15 @@ type BulkAction = 'ban' | 'remove' | 'lock';
 
 ## Storage (Devvit Redis)
 
-| Key                                  | Type                    | Purpose                       | TTL         |
-| ------------------------------------ | ----------------------- | ----------------------------- | ----------- |
-| `modarbot:{sub}:events`              | Sorted set (by ts)      | 24h event log                                  | rolling 24h |
-| `modarbot:{sub}:baseline:{kind}`     | Hash                    | EWMA / Welford baselines per detector kind     | rolling 7d  |
-| `modarbot:{sub}:anomalies`           | Sorted set (by firedAt) | Active + recent anomalies                      | 48h         |
-| `modarbot:{sub}:settings`            | Hash                    | SubSettings (thresholds, alert channel, flag)  | persistent  |
-| `modarbot:{sub}:installed-at`        | String                  | App install timestamp (for learning banner)    | persistent  |
-| `modarbot:{sub}:dedupe:{type}:{key}` | String (NX)             | Per-anomaly atomic dedupe lock                 | 10 min      |
-| `modarbot:{sub}:vote-snapshots`      | Hash (by postId)        | Latest vote snapshot per post                  | rolling 24h |
+| Key                                  | Type                    | Purpose                                       | TTL         |
+| ------------------------------------ | ----------------------- | --------------------------------------------- | ----------- |
+| `modarbot:{sub}:events`              | Sorted set (by ts)      | 24h event log                                 | rolling 24h |
+| `modarbot:{sub}:baseline:{kind}`     | Hash                    | EWMA / Welford baselines per detector kind    | rolling 7d  |
+| `modarbot:{sub}:anomalies`           | Sorted set (by firedAt) | Active + recent anomalies                     | 48h         |
+| `modarbot:{sub}:settings`            | Hash                    | SubSettings (thresholds, alert channel, flag) | persistent  |
+| `modarbot:{sub}:installed-at`        | String                  | App install timestamp (for learning banner)   | persistent  |
+| `modarbot:{sub}:dedupe:{type}:{key}` | String (NX)             | Per-anomaly atomic dedupe lock                | 10 min      |
+| `modarbot:{sub}:vote-snapshots`      | Hash (by postId)        | Latest vote snapshot per post                 | rolling 24h |
 
 ## Realtime channel
 

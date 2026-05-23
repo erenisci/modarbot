@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
 import { connectRealtime, disconnectRealtime } from '@devvit/web/client';
+import { useEffect, useRef, useState } from 'react';
 import type {
   AnomalyEvent,
   AnomalyType,
@@ -58,7 +58,8 @@ export const useWatchtower = () => {
     if (!state?.subredditName) return;
     const channel = channelFor(state.subredditName);
     if (subscribedChannel.current === channel) return;
-    if (subscribedChannel.current) disconnectRealtime(subscribedChannel.current);
+    if (subscribedChannel.current)
+      disconnectRealtime(subscribedChannel.current);
 
     connectRealtime({
       channel,

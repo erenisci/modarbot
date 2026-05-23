@@ -1,5 +1,6 @@
 import type { AnomalyEvent } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
+import { useTimeAgo } from '../hooks/useTimeAgo';
 
 const STATUS_CHIP: Record<AnomalyEvent['status'], string> = {
   active: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
@@ -13,13 +14,6 @@ const SEVERITY_BAR = (severity: number): string => {
   return 'bg-emerald-500';
 };
 
-const timeAgo = (firedAt: number): string => {
-  const diff = Date.now() - firedAt;
-  if (diff < 60_000) return 'just now';
-  if (diff < 3_600_000) return `${Math.round(diff / 60_000)}m ago`;
-  return `${Math.round(diff / 3_600_000)}h ago`;
-};
-
 export const AnomalyRow = ({
   anomaly,
   onDismiss,
@@ -29,6 +23,9 @@ export const AnomalyRow = ({
   onDismiss: () => void;
   onAction: () => void;
 }) => {
+  const when = useTimeAgo(anomaly.firedAt);
+  const severityPct = Math.round(anomaly.severity * 100);
+
   return (
     <div className="border border-gray-800 rounded-lg p-3 bg-gray-900/40 flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -42,16 +39,23 @@ export const AnomalyRow = ({
             {ANOMALY_LABELS[anomaly.type]}
           </span>
         </div>
-        <span className="text-xs text-gray-400">
-          {timeAgo(anomaly.firedAt)}
-        </span>
+        <span className="text-xs text-gray-400">{when}</span>
       </div>
       <div className="text-sm text-gray-300">{anomaly.reason}</div>
-      <div className="w-full h-1.5 rounded-full bg-gray-800 overflow-hidden">
+      <div
+        role="meter"
+        aria-label="Anomaly severity"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={severityPct}
+        aria-valuetext={`${severityPct}% severity`}
+        className="w-full h-1.5 rounded-full bg-gray-800 overflow-hidden"
+      >
         <div
           className={`h-full ${SEVERITY_BAR(anomaly.severity)}`}
-          style={{ width: `${Math.round(anomaly.severity * 100)}%` }}
+          style={{ width: `${severityPct}%` }}
         />
+        <span className="sr-only">Severity {severityPct}%</span>
       </div>
       {anomaly.status === 'active' && (
         <div className="flex gap-2 pt-1">

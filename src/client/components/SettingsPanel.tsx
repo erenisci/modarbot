@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AnomalyType, SubSettings } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
+import { useModal } from '../hooks/useModal';
 
 const ALL_TYPES: AnomalyType[] = [
   'account_age',
@@ -22,6 +23,7 @@ export const SettingsPanel = ({
   onSave: (settings: SubSettings) => Promise<void>;
   onFireDemo?: (type: AnomalyType, severity: number) => Promise<void>;
 }) => {
+  const { dialogProps, titleId } = useModal(onClose);
   const [draft, setDraft] = useState<SubSettings>({
     ...current,
     thresholds: { ...current.thresholds },
@@ -46,10 +48,19 @@ export const SettingsPanel = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-lg max-w-md w-full max-h-[85vh] overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+    >
+      <div
+        {...dialogProps}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-gray-900 border border-gray-700 rounded-lg max-w-[calc(100vw-2rem)] sm:max-w-md w-full max-h-[85vh] overflow-y-auto"
+      >
         <div className="p-5 border-b border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-100">Settings</h2>
+          <h2 id={titleId} className="text-lg font-semibold text-gray-100">
+            Settings
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-300"
@@ -65,11 +76,15 @@ export const SettingsPanel = ({
               <input
                 type="checkbox"
                 checked={draft.enabled}
-                onChange={(e) => setDraft((d) => ({ ...d, enabled: e.target.checked }))}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, enabled: e.target.checked }))
+                }
                 className="w-4 h-4"
               />
               <div>
-                <div className="text-sm font-medium text-gray-100">ModarBot enabled</div>
+                <div className="text-sm font-medium text-gray-100">
+                  ModarBot enabled
+                </div>
                 <div className="text-xs text-gray-500">
                   Disable to pause all ingestion and alerts.
                 </div>
@@ -141,10 +156,18 @@ export const SettingsPanel = ({
                 Demo / debug
               </div>
               <p className="text-xs text-gray-500 mb-2">
-                Fire a synthetic anomaly to verify the alert pipeline end-to-end.
+                Fire a synthetic anomaly to verify the alert pipeline
+                end-to-end.
               </p>
               <div className="flex flex-wrap gap-2">
-                {(['comment_cascade', 'new_account_cluster', 'report_storm', 'account_age'] as AnomalyType[]).map((t) => (
+                {(
+                  [
+                    'comment_cascade',
+                    'new_account_cluster',
+                    'report_storm',
+                    'account_age',
+                  ] as AnomalyType[]
+                ).map((t) => (
                   <button
                     key={t}
                     onClick={() => void onFireDemo(t, 0.85)}
