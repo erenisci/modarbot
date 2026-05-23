@@ -1,8 +1,12 @@
 import { context, reddit, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
 import type { BulkAction, SubSettings, WatchtowerState } from '../../shared/api';
+import { requireMod } from '../core/auth';
 import { orbFromAnomalies } from '../core/orb';
-import { recentAnomalies, updateAnomalyStatus } from '../storage/anomalies';
+import {
+  recentAnomalies,
+  updateAnomalyStatus,
+} from '../storage/anomalies';
 import { ANOMALY_TTL_MS, LEARNING_PERIOD_MS, keys } from '../storage/keys';
 import { loadSettings, saveSettings } from '../storage/settings';
 
@@ -18,6 +22,11 @@ const subOrFail = (): string => {
 
 const asThingId = <P extends string>(id: string, prefix: P): `${P}${string}` =>
   (id.startsWith(prefix) ? id : `${prefix}${id}`) as `${P}${string}`;
+
+const findAnomaly = async (sub: string, id: string) => {
+  const all = await recentAnomalies(sub, ANOMALY_TTL_MS);
+  return all.find((a) => a.id === id) ?? null;
+};
 
 api.get('/state', async (c) => {
   try {
@@ -53,7 +62,7 @@ api.get('/state', async (c) => {
   }
 });
 
-api.post('/anomaly/:id/dismiss', async (c) => {
+api.post('/anomaly/:id/dismiss', requireMod, async (c) => {
   try {
     const sub = subOrFail();
     const id = c.req.param('id');
@@ -67,11 +76,14 @@ api.post('/anomaly/:id/dismiss', async (c) => {
     return c.json({ type: 'dismiss', anomalyId: id, status: updated.status });
   } catch (error) {
     console.error('dismiss failed:', error);
-    return c.json<ErrorResponse>({ status: 'error', message: 'Dismiss failed' }, 500);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Dismiss failed' },
+      500
+    );
   }
 });
 
-api.post('/anomaly/:id/action', async (c) => {
+api.post('/anomaly/:id/action', requireMod, async (c) => {
   try {
     const sub = subOrFail();
     const id = c.req.param('id');
@@ -85,28 +97,55 @@ api.post('/anomaly/:id/action', async (c) => {
     return c.json({ type: 'action', anomalyId: id, status: updated.status });
   } catch (error) {
     console.error('action failed:', error);
-    return c.json<ErrorResponse>({ status: 'error', message: 'Action failed' }, 500);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Action failed' },
+      500
+    );
   }
 });
 
 type BulkActionRequest = {
   action: BulkAction;
-  users?: string[];
-  posts?: string[];
-  threads?: string[];
   reason?: string;
 };
 
-api.post('/anomaly/:id/bulk', async (c) => {
+const intersect = (
+  fromClient: string[] | undefined,
+  fromAnomaly: string[] | undefined
+): string[] => {
+  if (!fromClient || !fromAnomaly) return [];
+  const allowed = new Set(fromAnomaly);
+  return fromClient.filter((x) => allowed.has(x));
+};
+
+api.post('/anomaly/:id/bulk', requireMod, async (c) => {
   try {
     const sub = subOrFail();
     const id = c.req.param('id');
-    const body = await c.req.json<BulkActionRequest>();
+    const anomaly = await findAnomaly(sub, id);
+    if (!anomaly) {
+      return c.json<ErrorResponse>(
+        { status: 'error', message: 'Anomaly not found' },
+        404
+      );
+    }
+
+    const body = await c.req.json<
+      BulkActionRequest & {
+        users?: string[];
+        posts?: string[];
+        threads?: string[];
+      }
+    >();
     const reason = body.reason ?? `ModarBot bulk action (${id})`;
 
-    if (body.action === 'ban' && body.users) {
+    const allowedUsers = intersect(body.users, anomaly.entities.users);
+    const allowedPosts = intersect(body.posts, anomaly.entities.posts);
+    const allowedThreads = intersect(body.threads, anomaly.entities.threads);
+
+    if (body.action === 'ban' && allowedUsers.length > 0) {
       await Promise.allSettled(
-        body.users.slice(0, 20).map((username) =>
+        allowedUsers.slice(0, 20).map((username) =>
           reddit
             .banUser({
               subredditName: sub,
@@ -119,9 +158,9 @@ api.post('/anomaly/:id/bulk', async (c) => {
       );
     }
 
-    if (body.action === 'remove' && body.posts) {
+    if (body.action === 'remove' && allowedPosts.length > 0) {
       await Promise.allSettled(
-        body.posts.slice(0, 20).map(async (postId) => {
+        allowedPosts.slice(0, 20).map(async (postId) => {
           try {
             const post = await reddit.getPostById(asThingId(postId, 't3_'));
             await post.remove();
@@ -132,9 +171,9 @@ api.post('/anomaly/:id/bulk', async (c) => {
       );
     }
 
-    if (body.action === 'lock' && body.threads) {
+    if (body.action === 'lock' && allowedThreads.length > 0) {
       await Promise.allSettled(
-        body.threads.slice(0, 5).map(async (threadId) => {
+        allowedThreads.slice(0, 5).map(async (threadId) => {
           try {
             const post = await reddit.getPostById(asThingId(threadId, 't3_'));
             await post.lock();
@@ -146,14 +185,26 @@ api.post('/anomaly/:id/bulk', async (c) => {
     }
 
     const updated = await updateAnomalyStatus(sub, id, 'actioned');
-    return c.json({ type: 'bulk', anomalyId: id, status: updated?.status ?? 'actioned' });
+    return c.json({
+      type: 'bulk',
+      anomalyId: id,
+      status: updated?.status ?? 'actioned',
+      acted: {
+        users: allowedUsers.length,
+        posts: allowedPosts.length,
+        threads: allowedThreads.length,
+      },
+    });
   } catch (error) {
     console.error('bulk action failed:', error);
-    return c.json<ErrorResponse>({ status: 'error', message: 'Bulk action failed' }, 500);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Bulk action failed' },
+      500
+    );
   }
 });
 
-api.post('/settings', async (c) => {
+api.post('/settings', requireMod, async (c) => {
   try {
     const sub = subOrFail();
     const body = await c.req.json<SubSettings>();
@@ -161,6 +212,9 @@ api.post('/settings', async (c) => {
     return c.json({ type: 'settings', saved: true });
   } catch (error) {
     console.error('settings save failed:', error);
-    return c.json<ErrorResponse>({ status: 'error', message: 'Settings save failed' }, 500);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Settings save failed' },
+      500
+    );
   }
 });

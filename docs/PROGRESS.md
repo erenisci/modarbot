@@ -2,6 +2,13 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (Day 2 — security hardening)
+
+- **Vuln 1 fixed (HIGH):** every mutating API endpoint (`/api/anomaly/:id/{dismiss,action,bulk}`, `/api/settings`, `/api/demo/*`) now goes through a `requireMod` middleware (`src/server/core/auth.ts`) that calls `reddit.getCurrentUsername()` + `reddit.getModerators({ subredditName, username })` and 401/403s when the caller is not a moderator of the install sub. The `forUserType: "moderator"` flag in `devvit.json` only gated the menu button — it did **not** gate the webview's `fetch` calls, so a non-mod viewer of the Watchtower post could have invoked these endpoints directly. Closed.
+- **Vuln 2 fixed (MEDIUM):** `POST /api/anomaly/:id/bulk` now loads the anomaly from storage, then intersects the client-supplied `users`/`posts`/`threads` with the anomaly's stored entities. Only the intersection is sent to `reddit.banUser`, `reddit.getPostById(...).remove()`, or `.lock()`. A mod can no longer use the endpoint to ban or remove targets that aren't part of the underlying anomaly. The response now reports `{ acted: { users, posts, threads } }` so the client can show what actually happened.
+- `requireMod` failures log to console; otherwise the response body is `{ status: 'error', message: 'Moderator permission required' }` with HTTP 403.
+- **Type-check:** clean.
+
 ## 2026-05-23 (Day 2 — final)
 
 - **6th detector live: `vote-pattern.ts`** — fires when a post's upvote ratio drops by ≥0.2 between snapshots ≥5 min apart, post age <12h, score ≥5. Per-post comparison, not sub-wide. Severity scales with the size of the ratio drop.

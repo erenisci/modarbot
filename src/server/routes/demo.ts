@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { context } from '@devvit/web/server';
 import type { AnomalyEvent, AnomalyType } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
+import { requireMod } from '../core/auth';
 import { currentOrb } from '../core/orb';
 import { recordAnomaly } from '../storage/anomalies';
 import { publishAnomalies, publishOrb } from '../realtime/publish';
@@ -11,6 +12,8 @@ import { dispatchAlerts } from '../notify/modmail';
 type ErrorResponse = { status: 'error'; message: string };
 
 export const demo = new Hono();
+
+demo.use('/*', requireMod);
 
 const SYNTHETIC_REASONS: Record<AnomalyType, string> = {
   account_age:
