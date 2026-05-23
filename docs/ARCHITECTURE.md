@@ -58,7 +58,7 @@ Each event is normalized into a compact record and appended to an in-Redis event
 
 ### 2. Rolling baselines (`src/baselines/`)
 
-For each detector that needs a baseline (account-age, vote-pattern, comment-cascade, cross-post), ModarBot maintains a rolling 7-day baseline in Redis. Updates happen lazily on event ingestion — each new event nudges the baseline.
+For the event-driven detectors that need one (account-age, cross-post-influx), ModarBot maintains a rolling 7-day EWMA baseline in Redis. Updates happen lazily on event ingestion — each new event nudges the baseline. Comment-cascade derives its baseline from the prior 30-min window of the same thread, so it doesn't need persistent storage. Vote-pattern compares per-post snapshots (not a sub-wide baseline) and lives in its own `vote-snapshots` Redis hash refreshed by the Scheduler tick.
 
 Baselines stored as compact histograms / EWMA values to keep memory bounded.
 
@@ -66,14 +66,14 @@ Baselines stored as compact histograms / EWMA values to keep memory bounded.
 
 Each detector is a pure function: `(eventLog, baselines, settings) → AnomalyEvent[]`.
 
-| File                     | Detector             | Inputs                                                           | Trigger logic                                                            |
-| ------------------------ | -------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `account_age.ts`         | Account-age anomaly  | Last 10 min of post/comment events, baseline % new-account share | Window share > baseline + Nσ                                             |
-| `report_storm.ts`        | Report storm         | Last 15 min of report events grouped by target user              | Distinct reporters ≥ threshold                                           |
-| `vote_pattern.ts`        | Vote-pattern anomaly | Per-post snapshots from `storage/vote-snapshots` (Scheduler tick)| Ratio drops ≥0.2 between snapshots ≥5 min apart, post age < 12 h         |
-| `comment_cascade.ts`     | Comment cascade      | Comments/min on each active post vs same post's last 30-min rate | Burst factor ≥ threshold                                                 |
-| `cross_post_influx.ts`   | Cross-post influx    | Comments referencing the sub from outside                        | Window count > baseline + Nσ                                             |
-| `new_account_cluster.ts` | New-account cluster  | Active threads, posters' account creation dates                  | ≥ 4 accounts within 14d of each other active in one thread within 30 min |
+| File                     | Detector             | Inputs                                                            | Trigger logic                                                            |
+| ------------------------ | -------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `account_age.ts`         | Account-age anomaly  | Last 10 min of post/comment events, baseline % new-account share  | Window share > baseline + Nσ                                             |
+| `report_storm.ts`        | Report storm         | Last 15 min of report events grouped by target user               | Distinct reporters ≥ threshold                                           |
+| `vote_pattern.ts`        | Vote-pattern anomaly | Per-post snapshots from `storage/vote-snapshots` (Scheduler tick) | Ratio drops ≥0.2 between snapshots ≥5 min apart, post age < 12 h         |
+| `comment_cascade.ts`     | Comment cascade      | Comments/min on each active post vs same post's last 30-min rate  | Burst factor ≥ threshold                                                 |
+| `cross_post_influx.ts`   | Cross-post influx    | Comments referencing the sub from outside                         | Window count > baseline + Nσ                                             |
+| `new_account_cluster.ts` | New-account cluster  | Active threads, posters' account creation dates                   | ≥ 4 accounts within 14d of each other active in one thread within 30 min |
 
 The pipeline runs:
 
@@ -236,6 +236,9 @@ type SubSettings = {
 
 ## Security & privacy
 
+- **Mod-only API.** Every mutating `/api` route — dismiss, action, bulk, settings, demo — runs through the `requireMod` middleware in `src/server/core/auth.ts`, which uses `reddit.getCurrentUsername` + `reddit.getModerators({ subredditName, username })` to verify the caller. Non-mod viewers of the Watchtower post get a 401/403 from these endpoints; only `GET /api/state` (read-only) is open. The `forUserType: "moderator"` flag in `devvit.json` is treated as UI gating only, never as authorization.
+- **Entity allowlist on bulk actions.** `POST /api/anomaly/:id/bulk` loads the anomaly from Redis and intersects the client's `users`/`posts`/`threads` with `anomaly.entities.*`. Only the intersection reaches `reddit.banUser` / `.remove` / `.lock`, with a hard cap of 20 users, 20 posts, and 5 threads per call. The endpoint cannot be steered to act on targets that weren't part of the underlying signal.
+- **Atomic dedupe.** `recordAnomaly` uses `redis.set(..., { nx: true })` to atomically claim the dedupe lock before recording, eliminating a TOCTOU race that could otherwise let two concurrent events insert the same anomaly twice.
 - No data leaves the sub.
 - No cross-sub aggregation.
 - No naming of external subs as brigade sources in UI or notifications.

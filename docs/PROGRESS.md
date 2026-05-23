@@ -2,6 +2,12 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (final pass — docs synced)
+
+- `docs/ARCHITECTURE.md` updated: rolling-baselines section now lists only the detectors that actually use a persistent EWMA baseline (account-age, cross-post-influx); comment-cascade is described as per-thread relative, and vote-pattern is described as snapshot-based. Security & privacy section now documents the `requireMod` middleware, the bulk-action entity allowlist, and the atomic-dedupe fix.
+- README, CLAUDE, IDEA, SUBMISSION, DEMO_SCRIPT, HACKATHON all consistent: brand "ModarBot", slug "modarbot", six live detectors (5 event-driven + vote-pattern via Scheduler), $0 cost, mod-only API, test sub r/ModarBotTest.
+- Repo state: type-check clean, 8 commits pushed to `main` on GitHub. No stale TODO/FIXME notes left in code or docs. Manual playtest is the only remaining gate before publish + demo recording + Devpost submission.
+
 ## 2026-05-23 (Day 2 — security hardening)
 
 - **Vuln 1 fixed (HIGH):** every mutating API endpoint (`/api/anomaly/:id/{dismiss,action,bulk}`, `/api/settings`, `/api/demo/*`) now goes through a `requireMod` middleware (`src/server/core/auth.ts`) that calls `reddit.getCurrentUsername()` + `reddit.getModerators({ subredditName, username })` and 401/403s when the caller is not a moderator of the install sub. The `forUserType: "moderator"` flag in `devvit.json` only gated the menu button — it did **not** gate the webview's `fetch` calls, so a non-mod viewer of the Watchtower post could have invoked these endpoints directly. Closed.

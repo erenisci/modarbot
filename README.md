@@ -21,14 +21,14 @@ There is no real-time signal. AutoMod matches keywords on a single item. Crowd C
 
 Six independent statistical detectors continuously analyze the sub's live stream:
 
-| Detector | What it catches |
-|---|---|
-| 🆕 **Account-age anomaly** | Sudden flood of new accounts (<30 days) posting in the sub |
-| 🚨 **Report storm** | Many distinct reports against one user in a short window |
-| 📉 **Vote-pattern anomaly** | Post upvote ratio dropping sharply between scheduled snapshots |
-| 💬 **Comment cascade** | Sudden spike in comment velocity on a single thread |
-| 🔗 **Cross-post influx** | Bursts of referral traffic from external subs |
-| 👥 **New-account cluster** | Accounts created within days of each other active in the same thread |
+| Detector                    | What it catches                                                      |
+| --------------------------- | -------------------------------------------------------------------- |
+| 🆕 **Account-age anomaly**  | Sudden flood of new accounts (<30 days) posting in the sub           |
+| 🚨 **Report storm**         | Many distinct reports against one user in a short window             |
+| 📉 **Vote-pattern anomaly** | Post upvote ratio dropping sharply between scheduled snapshots       |
+| 💬 **Comment cascade**      | Sudden spike in comment velocity on a single thread                  |
+| 🔗 **Cross-post influx**    | Bursts of referral traffic from external subs                        |
+| 👥 **New-account cluster**  | Accounts created within days of each other active in the same thread |
 
 Each detector emits an `AnomalyEvent` with severity (0–1) and a plain-English reason. No AI. No external APIs. Just math.
 
@@ -45,13 +45,13 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 
 ## Why ModarBot wins
 
-| | |
-|---|---|
-| **Universal pain** | Every active sub has been raided. Current detection time: hours. ModarBot: seconds. |
-| **$0 forever** | Pure Devvit infrastructure. No AI, no API keys, no publisher cost. Sustainable from day one. |
-| **No competitor** | Nothing on Devvit, in Toolbox, in fsvreddit's ecosystem, or among PRAW bots covers cross-account real-time anomaly detection. |
-| **Mobile-native** | Devvit Web app — works wherever Reddit works. Toolbox is desktop-only. |
-| **Showcases Devvit Realtime** | Built around Reddit's pub/sub primitive. |
+|                               |                                                                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Universal pain**            | Every active sub has been raided. Current detection time: hours. ModarBot: seconds.                                           |
+| **$0 forever**                | Pure Devvit infrastructure. No AI, no API keys, no publisher cost. Sustainable from day one.                                  |
+| **No competitor**             | Nothing on Devvit, in Toolbox, in fsvreddit's ecosystem, or among PRAW bots covers cross-account real-time anomaly detection. |
+| **Mobile-native**             | Devvit Web app — works wherever Reddit works. Toolbox is desktop-only.                                                        |
+| **Showcases Devvit Realtime** | Built around Reddit's pub/sub primitive.                                                                                      |
 
 ## Tech stack
 
