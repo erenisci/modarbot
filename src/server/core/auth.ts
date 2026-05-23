@@ -18,6 +18,15 @@ const isModeratorOf = async (
   }
 };
 
+const safeCurrentUsername = async (): Promise<string | null> => {
+  try {
+    return (await reddit.getCurrentUsername()) ?? null;
+  } catch (err) {
+    console.error('getCurrentUsername failed:', err);
+    return null;
+  }
+};
+
 const denyJson = (c: HonoContext, status: 401 | 403, message: string) =>
   c.json<ErrorBody>({ status: 'error', message }, status);
 
@@ -25,7 +34,7 @@ export const requireMod: MiddlewareHandler = async (c, next) => {
   const sub = context.subredditName;
   if (!sub) return denyJson(c, 403, 'No subreddit in context');
 
-  const username = await reddit.getCurrentUsername();
+  const username = await safeCurrentUsername();
   if (!username) return denyJson(c, 401, 'Sign in required');
 
   if (!(await isModeratorOf(sub, username))) {

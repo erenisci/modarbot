@@ -1,4 +1,4 @@
-import { context } from '@devvit/web/server';
+import { context, reddit, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
 import type { AnomalyEvent, AnomalyType } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
@@ -7,6 +7,7 @@ import { currentOrb } from '../core/orb';
 import { dispatchAlerts } from '../notify/modmail';
 import { publishAnomalies, publishOrb } from '../realtime/publish';
 import { recordAnomaly } from '../storage/anomalies';
+import { DEMO_COOLDOWN_MS, keys } from '../storage/keys';
 import { loadSettings } from '../storage/settings';
 
 type ErrorResponse = { status: 'error'; message: string };
@@ -41,6 +42,20 @@ demo.post('/trigger', async (c) => {
       400
     );
   }
+
+  const username = (await reddit.getCurrentUsername()) ?? 'unknown';
+  const cooldownKey = keys.demoCooldown(sub, username);
+  const acquired = await redis.set(cooldownKey, '1', {
+    nx: true,
+    expiration: new Date(Date.now() + DEMO_COOLDOWN_MS),
+  });
+  if (!acquired) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Slow down — demo throttled' },
+      429
+    );
+  }
+
   const body: { type?: AnomalyType; severity?: number } = await c.req
     .json<{ type?: AnomalyType; severity?: number }>()
     .catch(() => ({}));

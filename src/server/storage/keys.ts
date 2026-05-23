@@ -6,9 +6,12 @@ export const keys = {
   dedupe: (sub: string, type: string, key: string) =>
     `modarbot:${sub}:dedupe:${type}:${key}`,
   installedAt: (sub: string) => `modarbot:${sub}:installed-at`,
+  demoCooldown: (sub: string, user: string) =>
+    `modarbot:${sub}:demo-cooldown:${user.toLowerCase()}`,
 };
 
 export const EVENT_LOG_TTL_MS = 24 * 60 * 60 * 1000;
 export const ANOMALY_TTL_MS = 48 * 60 * 60 * 1000;
 export const LEARNING_PERIOD_MS = 24 * 60 * 60 * 1000;
 export const DEDUPE_MS = 10 * 60 * 1000;
+export const DEMO_COOLDOWN_MS = 20 * 1000;
