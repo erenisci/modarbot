@@ -2,6 +2,24 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (Day 2)
+
+- **3 new detectors:**
+  - `report_storm.ts` — fires when ≥5 distinct reporters target one user inside a 15-min window. Severity scales with reporter count.
+  - `comment_cascade.ts` — compares last 10-min comment rate per thread to the prior 30-min baseline; fires when burst factor ≥ 5× and ≥ 8 recent comments. Severity scales with burst factor.
+  - `new_account_cluster.ts` — scans active threads for ≥4 accounts whose creation dates fall within a 14-day spread, all active in the same thread within 30 min. Severity scales with cluster size.
+- **Detector orchestrator** registers all 4 active detectors; each runs in `cycle(sub)` after every event.
+- **Modmail alert dispatcher** (`server/notify/modmail.ts`): when a fresh anomaly's severity ≥ sub-configured threshold, posts a modmail to the team via `reddit.modMail.createConversation`. Throttled to one modmail per anomaly-type per 10 minutes.
+- **Settings persistence** (`server/storage/settings.ts`): per-sub thresholds, alert channel, enabled flag stored in Redis hash. Defaults in `shared/api.ts`.
+- **Realtime client subscribe** (`useWatchtower`): `connectRealtime` from `@devvit/web/client` subscribes to `modarbot:{sub}` after first state fetch; each push triggers a quick state re-fetch. Polling kept as 15s fallback. Cleanup disconnects on unmount.
+- **Bulk action API** (`POST /api/anomaly/:id/bulk`): accepts `{ action: 'ban'|'remove'|'lock', users?, posts?, threads? }`. Caps each batch (20 users, 20 posts, 5 threads) and falls through individual failures.
+- **Settings API** (`POST /api/settings`): persists draft `SubSettings`.
+- **Drill-down modal** (`DrillDown.tsx`): shows offending accounts, posts, threads. Bulk action buttons require explicit second-click confirm. Closes the modal + marks anomaly `actioned` after success.
+- **Settings panel** (`SettingsPanel.tsx`): per-signal sensitivity sliders, alert channel select, master enabled checkbox.
+- **Watchtower** now has a `Settings` header button + paused banner when disabled.
+- **Cycle wiring:** `cycle(sub)` now loads settings first; skips entirely when disabled; calls `dispatchAlerts` after publishing fresh anomalies.
+- **Type-check:** `tsc --build` clean for client + server.
+
 ## 2026-05-22 (Day 1 end)
 
 - **Server pipeline live:**

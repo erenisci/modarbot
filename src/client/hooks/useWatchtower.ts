@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AnomalyEvent, WatchtowerState } from '../../shared/api';
+import { connectRealtime, disconnectRealtime } from '@devvit/web/client';
+import type { AnomalyEvent, SubSettings, WatchtowerState } from '../../shared/api';
 
 type Status = 'loading' | 'ready' | 'error';
 
-const POLL_MS = 5000;
+const POLL_MS = 15_000;
 
 export const useWatchtower = () => {
   const [status, setStatus] = useState<Status>('loading');
   const [state, setState] = useState<WatchtowerState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
+  const subscribedChannel = useRef<string | null>(null);
 
   const fetchState = async () => {
     try {
@@ -19,9 +21,11 @@ export const useWatchtower = () => {
       setState(json);
       setStatus('ready');
       setError(null);
+      return json;
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Failed to load state');
+      return null;
     }
   };
 
@@ -36,8 +40,27 @@ export const useWatchtower = () => {
     return () => {
       cancelled = true;
       if (timer.current !== null) window.clearInterval(timer.current);
+      if (subscribedChannel.current) {
+        disconnectRealtime(subscribedChannel.current);
+        subscribedChannel.current = null;
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!state?.subredditName) return;
+    const channel = `modarbot:${state.subredditName}`;
+    if (subscribedChannel.current === channel) return;
+    if (subscribedChannel.current) disconnectRealtime(subscribedChannel.current);
+
+    connectRealtime({
+      channel,
+      onMessage: () => {
+        void fetchState();
+      },
+    });
+    subscribedChannel.current = channel;
+  }, [state?.subredditName]);
 
   const dismiss = async (anomaly: AnomalyEvent) => {
     await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/dismiss`, {
@@ -53,5 +76,40 @@ export const useWatchtower = () => {
     await fetchState();
   };
 
-  return { status, state, error, refresh: fetchState, dismiss, actionTaken };
+  const bulkAction = async (
+    anomaly: AnomalyEvent,
+    action: 'ban' | 'remove' | 'lock'
+  ) => {
+    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        users: anomaly.entities.users,
+        posts: anomaly.entities.posts,
+        threads: anomaly.entities.threads,
+      }),
+    });
+    await fetchState();
+  };
+
+  const saveSettings = async (settings: SubSettings) => {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    await fetchState();
+  };
+
+  return {
+    status,
+    state,
+    error,
+    refresh: fetchState,
+    dismiss,
+    actionTaken,
+    bulkAction,
+    saveSettings,
+  };
 };

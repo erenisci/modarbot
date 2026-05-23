@@ -12,6 +12,8 @@ import {
 import { publishAnomalies, publishOrb } from '../realtime/publish';
 import { recentAnomalies } from '../storage/anomalies';
 import { ANOMALY_TTL_MS, keys } from '../storage/keys';
+import { loadSettings } from '../storage/settings';
+import { dispatchAlerts } from '../notify/modmail';
 
 type TriggerResponse = {
   status: 'success' | 'error';
@@ -37,11 +39,13 @@ const orbFromActive = async (sub: string): Promise<OrbColor> => {
 };
 
 const cycle = async (sub: string): Promise<void> => {
+  const settings = await loadSettings(sub);
+  if (!settings.enabled) return;
   const fresh = await runDetectors(sub);
-  if (fresh.length > 0) {
-    await publishAnomalies(sub, fresh);
-    await publishOrb(sub, await orbFromActive(sub));
-  }
+  if (fresh.length === 0) return;
+  await publishAnomalies(sub, fresh);
+  await publishOrb(sub, await orbFromActive(sub));
+  await dispatchAlerts(sub, fresh, settings);
 };
 
 triggers.post('/on-app-install', async (c) => {

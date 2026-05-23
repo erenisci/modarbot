@@ -30,6 +30,7 @@ export type WatchtowerState = {
   subredditName: string;
   modUser: string | null;
   learningUntil: number | null;
+  settings: SubSettings;
 };
 
 export type DismissResponse = {
