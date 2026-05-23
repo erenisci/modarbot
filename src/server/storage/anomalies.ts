@@ -6,11 +6,11 @@ export const recordAnomaly = async (
   anomaly: AnomalyEvent
 ): Promise<boolean> => {
   const dedupeKey = keys.dedupe(anomaly.subreddit, anomaly.type, anomaly.id);
-  const existed = await redis.get(dedupeKey);
-  if (existed) return false;
-  await redis.set(dedupeKey, '1', {
+  const acquired = await redis.set(dedupeKey, '1', {
+    nx: true,
     expiration: new Date(Date.now() + DEDUPE_MS),
   });
+  if (!acquired) return false;
 
   const member = JSON.stringify(anomaly);
   await redis.zAdd(keys.anomalies(anomaly.subreddit), {

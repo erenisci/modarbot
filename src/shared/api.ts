@@ -1,3 +1,9 @@
+export type BulkAction = 'ban' | 'remove' | 'lock';
+
+export const REALTIME_CHANNEL_PREFIX = 'modarbot';
+export const channelFor = (subreddit: string): string =>
+  `${REALTIME_CHANNEL_PREFIX}:${subreddit}`;
+
 export type AnomalyType =
   | 'account_age'
   | 'report_storm'

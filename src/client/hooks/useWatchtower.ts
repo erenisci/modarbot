@@ -3,9 +3,11 @@ import { connectRealtime, disconnectRealtime } from '@devvit/web/client';
 import type {
   AnomalyEvent,
   AnomalyType,
+  BulkAction,
   SubSettings,
   WatchtowerState,
 } from '../../shared/api';
+import { channelFor } from '../../shared/api';
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -54,7 +56,7 @@ export const useWatchtower = () => {
 
   useEffect(() => {
     if (!state?.subredditName) return;
-    const channel = `modarbot:${state.subredditName}`;
+    const channel = channelFor(state.subredditName);
     if (subscribedChannel.current === channel) return;
     if (subscribedChannel.current) disconnectRealtime(subscribedChannel.current);
 
@@ -81,10 +83,7 @@ export const useWatchtower = () => {
     await fetchState();
   };
 
-  const bulkAction = async (
-    anomaly: AnomalyEvent,
-    action: 'ban' | 'remove' | 'lock'
-  ) => {
+  const bulkAction = async (anomaly: AnomalyEvent, action: BulkAction) => {
     await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/bulk`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

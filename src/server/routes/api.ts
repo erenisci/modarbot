@@ -1,11 +1,7 @@
 import { context, reddit, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
-import type {
-  AnomalyEvent,
-  OrbColor,
-  SubSettings,
-  WatchtowerState,
-} from '../../shared/api';
+import type { BulkAction, SubSettings, WatchtowerState } from '../../shared/api';
+import { orbFromAnomalies } from '../core/orb';
 import { recentAnomalies, updateAnomalyStatus } from '../storage/anomalies';
 import { ANOMALY_TTL_MS, LEARNING_PERIOD_MS, keys } from '../storage/keys';
 import { loadSettings, saveSettings } from '../storage/settings';
@@ -13,15 +9,6 @@ import { loadSettings, saveSettings } from '../storage/settings';
 type ErrorResponse = { status: 'error'; message: string };
 
 export const api = new Hono();
-
-const orbFromAnomalies = (anomalies: AnomalyEvent[]): OrbColor => {
-  const active = anomalies.filter((a) => a.status === 'active');
-  if (active.length === 0) return 'green';
-  const maxSev = Math.max(...active.map((a) => a.severity));
-  if (maxSev > 0.7) return 'red';
-  if (maxSev > 0.3) return 'yellow';
-  return 'green';
-};
 
 const subOrFail = (): string => {
   const name = context.subredditName;
@@ -103,7 +90,7 @@ api.post('/anomaly/:id/action', async (c) => {
 });
 
 type BulkActionRequest = {
-  action: 'ban' | 'remove' | 'lock';
+  action: BulkAction;
   users?: string[];
   posts?: string[];
   threads?: string[];
@@ -118,40 +105,44 @@ api.post('/anomaly/:id/bulk', async (c) => {
     const reason = body.reason ?? `ModarBot bulk action (${id})`;
 
     if (body.action === 'ban' && body.users) {
-      for (const username of body.users.slice(0, 20)) {
-        try {
-          await reddit.banUser({
-            subredditName: sub,
-            username,
-            reason: 'ModarBot anomaly response',
-            note: reason,
-          });
-        } catch (err) {
-          console.error(`ban ${username} failed:`, err);
-        }
-      }
+      await Promise.allSettled(
+        body.users.slice(0, 20).map((username) =>
+          reddit
+            .banUser({
+              subredditName: sub,
+              username,
+              reason: 'ModarBot anomaly response',
+              note: reason,
+            })
+            .catch((err) => console.error(`ban ${username} failed:`, err))
+        )
+      );
     }
 
     if (body.action === 'remove' && body.posts) {
-      for (const postId of body.posts.slice(0, 20)) {
-        try {
-          const post = await reddit.getPostById(asThingId(postId, 't3_'));
-          await post.remove();
-        } catch (err) {
-          console.error(`remove ${postId} failed:`, err);
-        }
-      }
+      await Promise.allSettled(
+        body.posts.slice(0, 20).map(async (postId) => {
+          try {
+            const post = await reddit.getPostById(asThingId(postId, 't3_'));
+            await post.remove();
+          } catch (err) {
+            console.error(`remove ${postId} failed:`, err);
+          }
+        })
+      );
     }
 
     if (body.action === 'lock' && body.threads) {
-      for (const threadId of body.threads.slice(0, 5)) {
-        try {
-          const post = await reddit.getPostById(asThingId(threadId, 't3_'));
-          await post.lock();
-        } catch (err) {
-          console.error(`lock ${threadId} failed:`, err);
-        }
-      }
+      await Promise.allSettled(
+        body.threads.slice(0, 5).map(async (threadId) => {
+          try {
+            const post = await reddit.getPostById(asThingId(threadId, 't3_'));
+            await post.lock();
+          } catch (err) {
+            console.error(`lock ${threadId} failed:`, err);
+          }
+        })
+      );
     }
 
     const updated = await updateAnomalyStatus(sub, id, 'actioned');

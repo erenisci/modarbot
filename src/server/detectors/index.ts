@@ -17,19 +17,19 @@ const allDetectors = [
 export const runDetectors = async (
   subreddit: string
 ): Promise<AnomalyEvent[]> => {
-  const fresh: AnomalyEvent[] = [];
+  const results = await Promise.allSettled(
+    allDetectors.map((run) => run(subreddit))
+  );
 
-  for (const run of allDetectors) {
-    try {
-      const found = await run(subreddit);
-      for (const anomaly of found) {
-        const isNew = await recordAnomaly(anomaly);
-        if (isNew) fresh.push(anomaly);
-      }
-    } catch (error) {
-      console.error(`Detector failed: ${error}`);
+  const fresh: AnomalyEvent[] = [];
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error(`Detector failed: ${result.reason}`);
+      continue;
+    }
+    for (const anomaly of result.value) {
+      if (await recordAnomaly(anomaly)) fresh.push(anomaly);
     }
   }
-
   return fresh;
 };

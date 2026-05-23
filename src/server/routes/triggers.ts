@@ -1,7 +1,7 @@
 import { context, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
-import type { OrbColor } from '../../shared/api';
 import { createPost } from '../core/post';
+import { currentOrb } from '../core/orb';
 import { runDetectors } from '../detectors';
 import {
   ingestCommentSubmit,
@@ -10,8 +10,7 @@ import {
   ingestReport,
 } from '../ingest/handlers';
 import { publishAnomalies, publishOrb } from '../realtime/publish';
-import { recentAnomalies } from '../storage/anomalies';
-import { ANOMALY_TTL_MS, keys } from '../storage/keys';
+import { keys } from '../storage/keys';
 import { loadSettings } from '../storage/settings';
 import { dispatchAlerts } from '../notify/modmail';
 
@@ -28,24 +27,16 @@ const subOrFail = (): string => {
   return name;
 };
 
-const orbFromActive = async (sub: string): Promise<OrbColor> => {
-  const anomalies = await recentAnomalies(sub, ANOMALY_TTL_MS);
-  const active = anomalies.filter((a) => a.status === 'active');
-  if (active.length === 0) return 'green';
-  const maxSev = Math.max(...active.map((a) => a.severity));
-  if (maxSev > 0.7) return 'red';
-  if (maxSev > 0.3) return 'yellow';
-  return 'green';
-};
-
 const cycle = async (sub: string): Promise<void> => {
   const settings = await loadSettings(sub);
   if (!settings.enabled) return;
   const fresh = await runDetectors(sub);
   if (fresh.length === 0) return;
-  await publishAnomalies(sub, fresh);
-  await publishOrb(sub, await orbFromActive(sub));
-  await dispatchAlerts(sub, fresh, settings);
+  await Promise.all([
+    publishAnomalies(sub, fresh),
+    currentOrb(sub).then((orb) => publishOrb(sub, orb)),
+    dispatchAlerts(sub, fresh, settings),
+  ]);
 };
 
 triggers.post('/on-app-install', async (c) => {

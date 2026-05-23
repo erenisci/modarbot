@@ -1,23 +1,22 @@
 import { realtime } from '@devvit/web/server';
 import type { JsonValue } from '@devvit/web/shared';
 import type { AnomalyEvent, OrbColor } from '../../shared/api';
-
-const channel = (sub: string) => `modarbot:${sub}`;
+import { channelFor } from '../../shared/api';
 
 export const publishAnomalies = async (
   sub: string,
   anomalies: AnomalyEvent[]
 ): Promise<void> => {
-  for (const anomaly of anomalies) {
-    await safeSend(channel(sub), {
-      kind: 'anomaly',
-      anomaly,
-    } as unknown as JsonValue);
-  }
+  const channel = channelFor(sub);
+  await Promise.all(
+    anomalies.map((anomaly) =>
+      safeSend(channel, { kind: 'anomaly', anomaly } as unknown as JsonValue)
+    )
+  );
 };
 
 export const publishOrb = async (sub: string, orb: OrbColor): Promise<void> => {
-  await safeSend(channel(sub), {
+  await safeSend(channelFor(sub), {
     kind: 'status_update',
     orb,
   } as unknown as JsonValue);

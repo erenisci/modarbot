@@ -1,4 +1,6 @@
 import type { AnomalyEvent, OrbColor } from '../../shared/api';
+import { recentAnomalies } from '../storage/anomalies';
+import { ANOMALY_TTL_MS } from '../storage/keys';
 
 const ORB_WINDOW_MS = 30 * 60 * 1000;
 
@@ -12,4 +14,9 @@ export const orbFromAnomalies = (anomalies: AnomalyEvent[]): OrbColor => {
   if (peak >= 0.7) return 'red';
   if (peak >= 0.3) return 'yellow';
   return 'green';
+};
+
+export const currentOrb = async (subreddit: string): Promise<OrbColor> => {
+  const anomalies = await recentAnomalies(subreddit, ANOMALY_TTL_MS);
+  return orbFromAnomalies(anomalies);
 };

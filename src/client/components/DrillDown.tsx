@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import type { AnomalyEvent } from '../../shared/api';
+import type { AnomalyEvent, BulkAction } from '../../shared/api';
 import { ANOMALY_LABELS } from '../../shared/api';
-
-type BulkAction = 'ban' | 'remove' | 'lock';
 
 export const DrillDown = ({
   anomaly,
