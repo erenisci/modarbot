@@ -2,6 +2,33 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (polish sweep — packages A + B + C + D)
+
+Pre-submission polish before recording the demo and submitting on Devpost. Took the app from ~85% to ~95% polish across UX, accessibility, branding, repo hygiene, server hardening, and mobile responsiveness.
+
+**Package A (UX + accessibility):**
+- `ErrorBoundary` wraps the React root; uncaught throws in any child no longer white-screen the Watchtower (`src/client/components/ErrorBoundary.tsx`).
+- `useTimeAgo` hook (30 s tick) replaces the frozen `timeAgo()` in `AnomalyRow`.
+- `useModal` hook centralises `role="dialog"` + `aria-modal` + `aria-labelledby` + Escape-to-close + backdrop click. Applied to `DrillDown` and `SettingsPanel`.
+- `Toast` + `useToast` give immediate visual feedback after dismiss / bulk action / settings save / demo fire (success / info / error variants).
+- `LoadingSkeleton` replaces the text-only loading state with a layout-matching pulse skeleton.
+- Severity bar in `AnomalyRow` carries `role="meter"` + `aria-valuenow` + `aria-valuetext` + screen-reader-only label.
+
+**Package B (branding + repo hygiene):**
+- `public/snoo.png` replaced with `public/modarbot-icon.svg` — minimal SVG with a rose-gradient orb on a watchtower silhouette.
+- `README.md` gains a Screenshots section with three placeholders; `docs/screenshots/` seeded with a README listing the shots to capture.
+- `CHANGELOG.md` added at the repo root (Keep a Changelog format) summarising the 0.1.0 hackathon release: detectors, ingestion, Scheduler, Realtime, Watchtower UI, security gates, polish pass.
+
+**Package C (server hardening):**
+- `/api/demo/trigger` enforces a 20 s per-moderator cooldown via atomic `redis.set(..., { nx: true })` on a new `modarbot:{sub}:demo-cooldown:{user}` key. Returns 429 when locked. Prevents modmail spam from a runaway debug fire.
+- `core/auth.ts` wraps `reddit.getCurrentUsername()` in a safe helper; failures now surface as 401 'Sign in required' rather than 500 from the route's outer try/catch.
+
+**Package D (mobile responsive):**
+- `DrillDown` and `SettingsPanel` modal widths changed to `max-w-[calc(100vw-2rem)] sm:max-w-lg|md` so they stay readable on a 360 px viewport.
+- Watchtower header in `game.tsx` stacks (`flex-col sm:flex-row`) on narrow widths so the Settings button doesn't crowd the title.
+
+**Type-check:** clean for client + server.
+
 ## 2026-05-23 (final pass — docs synced)
 
 - `docs/ARCHITECTURE.md` updated: rolling-baselines section now lists only the detectors that actually use a persistent EWMA baseline (account-age, cross-post-influx); comment-cascade is described as per-thread relative, and vote-pattern is described as snapshot-based. Security & privacy section now documents the `requireMod` middleware, the bulk-action entity allowlist, and the atomic-dedupe fix.
