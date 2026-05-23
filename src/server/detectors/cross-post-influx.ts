@@ -1,13 +1,16 @@
 import type { AnomalyEvent } from '../../shared/api';
+import { readBaseline, stddev, updateBaseline } from '../storage/baselines';
 import type { RawEvent } from '../storage/events';
 import { recentEvents } from '../storage/events';
-import { readBaseline, stddev, updateBaseline } from '../storage/baselines';
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MIN_WINDOW_POSTS = 5;
 const SIGMA_TRIGGER = 3;
 
-const isExternalRedditReference = (url: string | undefined, sub: string): boolean => {
+const isExternalRedditReference = (
+  url: string | undefined,
+  sub: string
+): boolean => {
   if (!url) return false;
   if (!/reddit\.com\/r\//i.test(url)) return false;
   const match = url.match(/reddit\.com\/r\/([^/?#]+)/i);

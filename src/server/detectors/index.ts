@@ -1,10 +1,10 @@
 import type { AnomalyEvent } from '../../shared/api';
 import { recordAnomaly } from '../storage/anomalies';
 import { detectAccountAge } from './account-age';
-import { detectReportStorm } from './report-storm';
 import { detectCommentCascade } from './comment-cascade';
-import { detectNewAccountCluster } from './new-account-cluster';
 import { detectCrossPostInflux } from './cross-post-influx';
+import { detectNewAccountCluster } from './new-account-cluster';
+import { detectReportStorm } from './report-storm';
 
 const allDetectors = [
   detectAccountAge,

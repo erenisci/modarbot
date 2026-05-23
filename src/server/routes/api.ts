@@ -1,12 +1,13 @@
 import { context, reddit, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
-import type { BulkAction, SubSettings, WatchtowerState } from '../../shared/api';
+import type {
+  BulkAction,
+  SubSettings,
+  WatchtowerState,
+} from '../../shared/api';
 import { requireMod } from '../core/auth';
 import { orbFromAnomalies } from '../core/orb';
-import {
-  recentAnomalies,
-  updateAnomalyStatus,
-} from '../storage/anomalies';
+import { recentAnomalies, updateAnomalyStatus } from '../storage/anomalies';
 import { ANOMALY_TTL_MS, LEARNING_PERIOD_MS, keys } from '../storage/keys';
 import { loadSettings, saveSettings } from '../storage/settings';
 

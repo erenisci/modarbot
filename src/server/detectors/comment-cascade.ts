@@ -21,7 +21,10 @@ export const detectCommentCascade = async (
   const recentCutoff = now - RECENT_WINDOW_MS;
   const priorCutoff = now - lookbackMs;
 
-  const recentByThread = new Map<string, Extract<RawEvent, { kind: 'comment' }>[]>();
+  const recentByThread = new Map<
+    string,
+    Extract<RawEvent, { kind: 'comment' }>[]
+  >();
   const priorByThread = new Map<string, number>();
 
   for (const c of comments) {
@@ -39,12 +42,16 @@ export const detectCommentCascade = async (
   for (const [threadId, recentComments] of recentByThread) {
     if (recentComments.length < MIN_RECENT_COMMENTS) continue;
     const recentRate = recentComments.length / (RECENT_WINDOW_MS / 60_000);
-    const priorRate = (priorByThread.get(threadId) ?? 0) / (PRIOR_WINDOW_MS / 60_000);
+    const priorRate =
+      (priorByThread.get(threadId) ?? 0) / (PRIOR_WINDOW_MS / 60_000);
     if (priorRate > 0 && recentRate < priorRate * BURST_FACTOR) continue;
 
     const burst = priorRate > 0 ? recentRate / priorRate : recentRate;
     const severity = Math.min(1, burst / (BURST_FACTOR * 2));
-    const users = [...new Set(recentComments.map((c) => c.author))].slice(0, 20);
+    const users = [...new Set(recentComments.map((c) => c.author))].slice(
+      0,
+      20
+    );
 
     out.push({
       id: `comment_cascade:${threadId}:${Math.floor(now / RECENT_WINDOW_MS)}`,

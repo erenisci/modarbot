@@ -126,6 +126,8 @@ Throttled to one notification per anomaly-type per 10 min to avoid spam.
 
 ## Data model
 
+Events live in `src/server/storage/events.ts`. They are keyed by sub in Redis, so each event omits the `subreddit` field.
+
 ```ts
 type RawEvent =
   | {
@@ -133,20 +135,19 @@ type RawEvent =
       id: string;
       author: string;
       authorCreatedAt: number;
-      subreddit: string;
       postedAt: number;
       threadId: string;
+      url?: string;
+      crosspostParentId?: string;
     }
   | {
       kind: 'comment';
       id: string;
       author: string;
       authorCreatedAt: number;
-      subreddit: string;
       postedAt: number;
       parentId: string;
       threadId: string;
-      bodyLen: number;
     }
   | {
       kind: 'report';
@@ -158,21 +159,29 @@ type RawEvent =
       reportedAt: number;
     }
   | {
-      kind: 'voteSnap';
-      postId: string;
-      takenAt: number;
-      ups: number;
-      downs: number;
-      ratio: number;
-    }
-  | {
       kind: 'modAction';
       actor: string;
       action: string;
       targetId: string;
       at: number;
     };
+```
 
+Vote snapshots live separately (one per post, refreshed by the Scheduler) in `src/server/storage/vote-snapshots.ts`:
+
+```ts
+type VoteSnapshot = {
+  postId: string;
+  ratio: number;
+  score: number;
+  takenAt: number;
+  postedAt: number;
+};
+```
+
+Shared client/server contract in `src/shared/api.ts`:
+
+```ts
 type AnomalyEvent = {
   id: string;
   subreddit: string;
@@ -193,20 +202,23 @@ type AnomalyEvent = {
 type SubSettings = {
   thresholds: Partial<Record<AnomalyEvent['type'], number>>;
   alertChannel: 'modmail' | 'push' | 'both' | 'none';
-  muteWindows: Array<{ startHour: number; endHour: number; tz: string }>;
   enabled: boolean;
 };
+
+type BulkAction = 'ban' | 'remove' | 'lock';
 ```
 
 ## Storage (Devvit Redis)
 
 | Key                                  | Type                    | Purpose                       | TTL         |
 | ------------------------------------ | ----------------------- | ----------------------------- | ----------- |
-| `modarbot:{sub}:events`              | Sorted set (by ts)      | 24h event log                 | rolling 24h |
-| `modarbot:{sub}:baseline:{kind}`     | Hash                    | EWMA / histogram per detector | rolling 7d  |
-| `modarbot:{sub}:anomalies`           | Sorted set (by firedAt) | Active + recent anomalies     | 48h         |
-| `modarbot:{sub}:settings`            | Hash                    | SubSettings                   | persistent  |
-| `modarbot:{sub}:dedupe:{type}:{key}` | String                  | Per-anomaly dedupe lock       | 10 min      |
+| `modarbot:{sub}:events`              | Sorted set (by ts)      | 24h event log                                  | rolling 24h |
+| `modarbot:{sub}:baseline:{kind}`     | Hash                    | EWMA / Welford baselines per detector kind     | rolling 7d  |
+| `modarbot:{sub}:anomalies`           | Sorted set (by firedAt) | Active + recent anomalies                      | 48h         |
+| `modarbot:{sub}:settings`            | Hash                    | SubSettings (thresholds, alert channel, flag)  | persistent  |
+| `modarbot:{sub}:installed-at`        | String                  | App install timestamp (for learning banner)    | persistent  |
+| `modarbot:{sub}:dedupe:{type}:{key}` | String (NX)             | Per-anomaly atomic dedupe lock                 | 10 min      |
+| `modarbot:{sub}:vote-snapshots`      | Hash (by postId)        | Latest vote snapshot per post                  | rolling 24h |
 
 ## Realtime channel
 

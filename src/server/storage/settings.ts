@@ -1,5 +1,5 @@
 import { redis } from '@devvit/web/server';
-import type { SubSettings, AnomalyType } from '../../shared/api';
+import type { AnomalyType, SubSettings } from '../../shared/api';
 import { DEFAULT_SETTINGS } from '../../shared/api';
 import { keys } from './keys';
 
@@ -7,7 +7,9 @@ export const loadSettings = async (sub: string): Promise<SubSettings> => {
   const raw = await redis.hGetAll(keys.settings(sub));
   if (!raw || Object.keys(raw).length === 0) return { ...DEFAULT_SETTINGS };
 
-  const thresholds: Partial<Record<AnomalyType, number>> = { ...DEFAULT_SETTINGS.thresholds };
+  const thresholds: Partial<Record<AnomalyType, number>> = {
+    ...DEFAULT_SETTINGS.thresholds,
+  };
   for (const key of Object.keys(thresholds) as AnomalyType[]) {
     const v = raw[`threshold_${key}`];
     if (v !== undefined) {
@@ -16,8 +18,13 @@ export const loadSettings = async (sub: string): Promise<SubSettings> => {
     }
   }
 
-  const alertChannel = (raw.alertChannel as SubSettings['alertChannel']) ?? DEFAULT_SETTINGS.alertChannel;
-  const enabled = raw.enabled !== undefined ? raw.enabled === 'true' : DEFAULT_SETTINGS.enabled;
+  const alertChannel =
+    (raw.alertChannel as SubSettings['alertChannel']) ??
+    DEFAULT_SETTINGS.alertChannel;
+  const enabled =
+    raw.enabled !== undefined
+      ? raw.enabled === 'true'
+      : DEFAULT_SETTINGS.enabled;
 
   return { thresholds, alertChannel, enabled };
 };

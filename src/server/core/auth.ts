@@ -1,5 +1,5 @@
-import type { Context as HonoContext, MiddlewareHandler } from 'hono';
 import { context, reddit } from '@devvit/web/server';
+import type { Context as HonoContext, MiddlewareHandler } from 'hono';
 
 type ErrorBody = { status: 'error'; message: string };
 
@@ -8,10 +8,10 @@ const isModeratorOf = async (
   username: string
 ): Promise<boolean> => {
   try {
-    const mods = await reddit
-      .getModerators({ subredditName, username })
-      .all();
-    return mods.some((m) => m.username.toLowerCase() === username.toLowerCase());
+    const mods = await reddit.getModerators({ subredditName, username }).all();
+    return mods.some(
+      (m) => m.username.toLowerCase() === username.toLowerCase()
+    );
   } catch (err) {
     console.error(`getModerators(${subredditName}, ${username}) failed:`, err);
     return false;

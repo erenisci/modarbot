@@ -1,11 +1,11 @@
-import { Hono } from 'hono';
 import { context, reddit } from '@devvit/web/server';
+import { Hono } from 'hono';
 import { currentOrb } from '../core/orb';
-import { recordAnomaly } from '../storage/anomalies';
-import { loadSettings } from '../storage/settings';
+import { detectVotePattern } from '../detectors/vote-pattern';
 import { dispatchAlerts } from '../notify/modmail';
 import { publishAnomalies, publishOrb } from '../realtime/publish';
-import { detectVotePattern } from '../detectors/vote-pattern';
+import { recordAnomaly } from '../storage/anomalies';
+import { loadSettings } from '../storage/settings';
 import {
   loadSnapshots,
   saveSnapshots,
@@ -52,7 +52,8 @@ scheduler.post('/vote-snapshot', async (c) => {
       // PostV2 doesn't expose down-votes; prefer upvoteRatio when Reddit provides it,
       // otherwise fall back to score sign (rough but bounded).
       const ratio =
-        typeof (post as unknown as { upvoteRatio?: number }).upvoteRatio === 'number'
+        typeof (post as unknown as { upvoteRatio?: number }).upvoteRatio ===
+        'number'
           ? (post as unknown as { upvoteRatio: number }).upvoteRatio
           : score >= 0
             ? 1

@@ -1,7 +1,7 @@
 import { context, redis } from '@devvit/web/server';
 import { Hono } from 'hono';
-import { createPost } from '../core/post';
 import { currentOrb } from '../core/orb';
+import { createPost } from '../core/post';
 import { runDetectors } from '../detectors';
 import {
   ingestCommentSubmit,
@@ -9,10 +9,10 @@ import {
   ingestPostSubmit,
   ingestReport,
 } from '../ingest/handlers';
+import { dispatchAlerts } from '../notify/modmail';
 import { publishAnomalies, publishOrb } from '../realtime/publish';
 import { keys } from '../storage/keys';
 import { loadSettings } from '../storage/settings';
-import { dispatchAlerts } from '../notify/modmail';
 
 type TriggerResponse = {
   status: 'success' | 'error';

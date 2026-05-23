@@ -22,7 +22,9 @@ export const dispatchAlerts = async (
     const tKey = throttleKey(sub, anomaly.type);
     const already = await redis.get(tKey);
     if (already) continue;
-    await redis.set(tKey, '1', { expiration: new Date(Date.now() + THROTTLE_MS) });
+    await redis.set(tKey, '1', {
+      expiration: new Date(Date.now() + THROTTLE_MS),
+    });
 
     try {
       await reddit.modMail.createConversation({
@@ -52,7 +54,13 @@ const buildBody = (anomaly: AnomalyEvent): string => {
   ];
 
   if (users.length > 0) {
-    lines.push('', `_Accounts involved:_ ${users.slice(0, 8).map((u) => `u/${u}`).join(', ')}${users.length > 8 ? `, +${users.length - 8} more` : ''}`);
+    lines.push(
+      '',
+      `_Accounts involved:_ ${users
+        .slice(0, 8)
+        .map((u) => `u/${u}`)
+        .join(', ')}${users.length > 8 ? `, +${users.length - 8} more` : ''}`
+    );
   }
   if (threads.length > 0) {
     lines.push('', `_Threads:_ ${threads.slice(0, 3).join(', ')}`);

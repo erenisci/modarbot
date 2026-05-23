@@ -13,7 +13,8 @@ export const detectNewAccountCluster = async (
 ): Promise<AnomalyEvent[]> => {
   const events = await recentEvents(subreddit, WINDOW_MS);
   const authored = events.filter(
-    (e): e is Authored => (e.kind === 'post' || e.kind === 'comment') && !!e.threadId
+    (e): e is Authored =>
+      (e.kind === 'post' || e.kind === 'comment') && !!e.threadId
   );
   if (authored.length < CLUSTER_MIN_ACCOUNTS) return [];
 
@@ -39,7 +40,8 @@ export const detectNewAccountCluster = async (
       let j = i;
       while (j < ages.length) {
         const candidate = ages[j];
-        if (!candidate || candidate[1] - start[1] > CLUSTER_AGE_SPREAD_MS) break;
+        if (!candidate || candidate[1] - start[1] > CLUSTER_AGE_SPREAD_MS)
+          break;
         j++;
       }
       const size = j - i;

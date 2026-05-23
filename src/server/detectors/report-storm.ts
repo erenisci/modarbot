@@ -25,7 +25,10 @@ export const detectReportStorm = async (
   const out: AnomalyEvent[] = [];
   for (const [targetUser, reporters] of byTarget) {
     if (reporters.size < DISTINCT_REPORTERS_TRIGGER) continue;
-    const severity = Math.min(1, reporters.size / (DISTINCT_REPORTERS_TRIGGER * 2));
+    const severity = Math.min(
+      1,
+      reporters.size / (DISTINCT_REPORTERS_TRIGGER * 2)
+    );
     out.push({
       id: `report_storm:${targetUser}:${Math.floor(Date.now() / WINDOW_MS)}`,
       subreddit,
