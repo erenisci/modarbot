@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="max-w-md text-center flex flex-col gap-3">
           <div className="text-2xl">🛑</div>
           <div className="text-lg font-semibold">Watchtower crashed</div>
-          <div className="text-sm text-rose-200/70 font-mono break-words">
+          <div className="text-sm text-rose-200/70 font-mono wrap-break-word">
             {error.message}
           </div>
           <button

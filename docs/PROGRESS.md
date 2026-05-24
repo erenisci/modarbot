@@ -2,6 +2,15 @@
 
 Running log. Newest entries on top. One line per change.
 
+## 2026-05-23 (final sanity check — pre-submission gate)
+
+- `npx tsc --build` — clean for client + server.
+- `npx eslint "src/**/*.{ts,tsx}"` — clean. Fixed one violation: `useTimeAgo` was calling `setText` synchronously inside its effect (React 19's new `react-hooks/set-state-in-effect` rule). Replaced with a tick-counter `useState` that the interval increments; the displayed string is now derived in render, so no state update fires during the effect body.
+- `ErrorBoundary` lifecycle methods now carry explicit `override` modifiers (lint follow-up from the same React 19 strictness sweep).
+- Repo searched for `TODO`, `FIXME`, `XXX`, stray `console.log`, `debugger`, `@ts-ignore`, `@ts-nocheck`, `eslint-disable`, and `any` — zero hits.
+- `git status` clean; tag `v0.1.0-hackathon` already pushed.
+- App is **ship-ready** from the code side. Only manual gates remain: `npm run dev` playtest, three screenshots into `docs/screenshots/`, 60 s demo video, `devvit publish`, Devpost form submission.
+
 ## 2026-05-23 (polish sweep — packages A + B + C + D)
 
 Pre-submission polish before recording the demo and submitting on Devpost. Took the app from ~85% to ~95% polish across UX, accessibility, branding, repo hygiene, server hardening, and mobile responsiveness.

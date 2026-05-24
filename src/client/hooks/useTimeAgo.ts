@@ -11,13 +11,12 @@ const format = (firedAt: number): string => {
 };
 
 export const useTimeAgo = (firedAt: number): string => {
-  const [text, setText] = useState(() => format(firedAt));
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    setText(format(firedAt));
-    const id = window.setInterval(() => setText(format(firedAt)), REFRESH_MS);
+    const id = window.setInterval(() => setTick((t) => t + 1), REFRESH_MS);
     return () => window.clearInterval(id);
-  }, [firedAt]);
+  }, []);
 
-  return text;
+  return format(firedAt);
 };
