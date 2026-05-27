@@ -1,6 +1,7 @@
+import React from 'react';
 import './index.css';
 
-import { requestExpandedMode } from '@devvit/web/client';
+import { getWebViewMode, requestExpandedMode } from '@devvit/web/client';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { OrbColor, WatchtowerState } from '../shared/api';
@@ -15,6 +16,14 @@ const ORB_LABEL: Record<OrbColor, string> = {
   green: 'All quiet',
   yellow: 'Watch',
   red: 'Alert',
+};
+
+const openWatchtower = (e: React.MouseEvent) => {
+  try {
+    requestExpandedMode(e.nativeEvent, 'game');
+  } catch {
+    window.location.href = '/game.html';
+  }
 };
 
 export const Splash = () => {
@@ -32,10 +41,14 @@ export const Splash = () => {
           json.anomalies.filter((a) => a.status === 'active').length
         );
       } catch {
-        // silent — splash should never block
+        // silent
       }
     };
     void load();
+
+    if (getWebViewMode() === 'expanded') {
+      window.location.href = '/game.html';
+    }
   }, []);
 
   return (
@@ -52,7 +65,7 @@ export const Splash = () => {
       </div>
       <button
         className="mt-3 bg-rose-500 hover:bg-rose-600 text-white rounded-full px-5 h-10 text-sm font-medium transition-colors"
-        onClick={(e) => requestExpandedMode(e.nativeEvent, 'game')}
+        onClick={openWatchtower}
       >
         Open Watchtower
       </button>
