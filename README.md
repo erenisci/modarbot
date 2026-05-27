@@ -72,7 +72,7 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 │   │   └── storage/        # Redis key conventions, baselines, events
 │   ├── client/             # React Watchtower UI (splash + game webviews)
 │   └── shared/             # Types shared between client and server
-├── docs/                   # IDEA, ARCHITECTURE, PROGRESS, HACKATHON rules
+├── docs/                   # IDEA, ARCHITECTURE, HACKATHON, DEMO_SCRIPT
 ├── devvit.json             # Devvit app config (triggers, menu, entrypoints)
 └── package.json
 ```
