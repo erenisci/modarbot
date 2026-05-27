@@ -2,7 +2,7 @@ export type BulkAction = 'ban' | 'remove' | 'lock';
 
 export const REALTIME_CHANNEL_PREFIX = 'modarbot';
 export const channelFor = (subreddit: string): string =>
-  `${REALTIME_CHANNEL_PREFIX}:${subreddit}`;
+  `${REALTIME_CHANNEL_PREFIX}_${subreddit.replace(/[^a-zA-Z0-9_]/g, '_')}`;
 
 export type AnomalyType =
   | 'account_age'
