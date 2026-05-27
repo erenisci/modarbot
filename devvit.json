@@ -49,6 +49,6 @@
     "build": "vite build"
   },
   "dev": {
-    "subreddit": "modarbot_dev"
+    "subreddit": "ModarBotTest"
   }
 }
