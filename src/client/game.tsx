@@ -45,6 +45,7 @@ export const App = () => {
     state,
     error,
     dismiss,
+    reactivate,
     actionTaken,
     bulkAction,
     saveSettings,
@@ -155,8 +156,13 @@ export const App = () => {
                 <AnomalyRow
                   key={anomaly.id}
                   anomaly={anomaly}
+                  subredditName={state.subredditName}
                   onDismiss={() => handleDismiss(anomaly)}
                   onAction={() => setDrillDown(anomaly)}
+                  onReactivate={async () => {
+                    await reactivate(anomaly);
+                    show('Anomaly re-activated', 'info');
+                  }}
                 />
               ))}
             </div>

@@ -84,6 +84,13 @@ export const useWatchtower = () => {
     await fetchState();
   };
 
+  const reactivate = async (anomaly: AnomalyEvent) => {
+    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/reactivate`, {
+      method: 'POST',
+    });
+    await fetchState();
+  };
+
   const bulkAction = async (anomaly: AnomalyEvent, action: BulkAction) => {
     await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/bulk`, {
       method: 'POST',
@@ -125,6 +132,7 @@ export const useWatchtower = () => {
     error,
     refresh: fetchState,
     dismiss,
+    reactivate,
     actionTaken,
     bulkAction,
     saveSettings,

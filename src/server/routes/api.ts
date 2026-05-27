@@ -84,6 +84,27 @@ api.post('/anomaly/:id/dismiss', requireMod, async (c) => {
   }
 });
 
+api.post('/anomaly/:id/reactivate', requireMod, async (c) => {
+  try {
+    const sub = subOrFail();
+    const id = c.req.param('id');
+    const updated = await updateAnomalyStatus(sub, id, 'active');
+    if (!updated) {
+      return c.json<ErrorResponse>(
+        { status: 'error', message: 'Anomaly not found' },
+        404
+      );
+    }
+    return c.json({ type: 'reactivate', anomalyId: id, status: updated.status });
+  } catch (error) {
+    console.error('reactivate failed:', error);
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'Reactivate failed' },
+      500
+    );
+  }
+});
+
 api.post('/anomaly/:id/action', requireMod, async (c) => {
   try {
     const sub = subOrFail();
