@@ -57,8 +57,8 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 
 _To capture during playtest in `r/ModarBotTest`:_
 
-| Splash (feed view) | Watchtower (expanded) | Drill-down + bulk action |
-| --- | --- | --- |
+| Splash (feed view)                     | Watchtower (expanded)                          | Drill-down + bulk action                      |
+| -------------------------------------- | ---------------------------------------------- | --------------------------------------------- |
 | ![Splash](docs/screenshots/splash.png) | ![Watchtower](docs/screenshots/watchtower.png) | ![Drill-down](docs/screenshots/drilldown.png) |
 
 ## Tech stack
@@ -89,9 +89,7 @@ _To capture during playtest in `r/ModarBotTest`:_
 
 - **[docs/IDEA.md](docs/IDEA.md)** — full concept, pain evidence, why no-AI is a feature, competitor analysis
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — signal pipeline, Realtime bus, Redis schema, failure modes
-- **[docs/PROGRESS.md](docs/PROGRESS.md)** — running build log
 - **[docs/HACKATHON.md](docs/HACKATHON.md)** — hackathon rules, dates, submission requirements
-- **[CLAUDE.md](CLAUDE.md)** — onboarding for AI coding sessions
 
 ## Status
 

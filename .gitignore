@@ -23,3 +23,10 @@ npm-debug.log*
 TEMP.md
 NOTES.md
 SCRATCH.md
+
+# internal docs (keep local, don't publish to GitHub)
+CLAUDE.md
+CHANGELOG.md
+docs/PROGRESS.md
+docs/SUBMISSION.md
+docs/SUBMISSION_FORM.md

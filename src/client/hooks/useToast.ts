@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
 
 export type ToastKind = 'success' | 'info' | 'error';
-export type ToastState = { id: number; message: string; kind: ToastKind } | null;
+export type ToastState = {
+  id: number;
+  message: string;
+  kind: ToastKind;
+} | null;
 
 const DURATION_MS = 3_500;
 

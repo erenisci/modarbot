@@ -95,7 +95,11 @@ api.post('/anomaly/:id/reactivate', requireMod, async (c) => {
         404
       );
     }
-    return c.json({ type: 'reactivate', anomalyId: id, status: updated.status });
+    return c.json({
+      type: 'reactivate',
+      anomalyId: id,
+      status: updated.status,
+    });
   } catch (error) {
     console.error('reactivate failed:', error);
     return c.json<ErrorResponse>(
