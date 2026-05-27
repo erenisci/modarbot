@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 
-import { getWebViewMode, requestExpandedMode } from '@devvit/web/client';
+import { requestExpandedMode } from '@devvit/web/client';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { OrbColor, WatchtowerState } from '../shared/api';
@@ -45,10 +45,6 @@ export const Splash = () => {
       }
     };
     void load();
-
-    if (getWebViewMode() === 'expanded') {
-      window.location.href = '/game.html';
-    }
   }, []);
 
   return (
