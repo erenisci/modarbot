@@ -70,26 +70,17 @@ export const useWatchtower = () => {
     subscribedChannel.current = channel;
   }, [state?.subredditName]);
 
-  const dismiss = async (anomaly: AnomalyEvent) => {
-    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/dismiss`, {
+  const postAnomaly = async (anomaly: AnomalyEvent, verb: string) => {
+    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/${verb}`, {
       method: 'POST',
     });
     await fetchState();
   };
 
-  const actionTaken = async (anomaly: AnomalyEvent) => {
-    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/action`, {
-      method: 'POST',
-    });
-    await fetchState();
-  };
-
-  const reactivate = async (anomaly: AnomalyEvent) => {
-    await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/reactivate`, {
-      method: 'POST',
-    });
-    await fetchState();
-  };
+  const dismiss = (anomaly: AnomalyEvent) => postAnomaly(anomaly, 'dismiss');
+  const actionTaken = (anomaly: AnomalyEvent) => postAnomaly(anomaly, 'action');
+  const reactivate = (anomaly: AnomalyEvent) =>
+    postAnomaly(anomaly, 'reactivate');
 
   const bulkAction = async (anomaly: AnomalyEvent, action: BulkAction) => {
     await fetch(`/api/anomaly/${encodeURIComponent(anomaly.id)}/bulk`, {

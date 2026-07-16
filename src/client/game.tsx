@@ -53,6 +53,7 @@ export const App = () => {
   } = useWatchtower();
   const [drillDown, setDrillDown] = useState<AnomalyEvent | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showHandled, setShowHandled] = useState(false);
 
   if (status === 'loading') return <LoadingSkeleton />;
 
@@ -145,26 +146,53 @@ export const App = () => {
               {active.length} active · {handled.length} handled
             </span>
           </div>
-          {state.anomalies.length === 0 ? (
+          {active.length === 0 ? (
             <div className="border border-dashed border-gray-800 rounded-lg p-6 text-center text-gray-500 text-sm">
-              No anomalies yet. ModarBot will surface unusual patterns the
-              moment they appear.
+              {handled.length > 0
+                ? 'All clear — no active anomalies right now.'
+                : 'No anomalies yet. ModarBot will surface unusual patterns the moment they appear.'}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {state.anomalies.map((anomaly) => (
+              {active.map((anomaly) => (
                 <AnomalyRow
                   key={anomaly.id}
                   anomaly={anomaly}
                   subredditName={state.subredditName}
                   onDismiss={() => handleDismiss(anomaly)}
                   onAction={() => setDrillDown(anomaly)}
-                  onReactivate={async () => {
-                    await reactivate(anomaly);
-                    show('Anomaly re-activated', 'info');
-                  }}
                 />
               ))}
+            </div>
+          )}
+
+          {handled.length > 0 && (
+            <div className="mt-4">
+              <button
+                onClick={() => setShowHandled((v) => !v)}
+                aria-expanded={showHandled}
+                className="w-full flex items-center justify-between text-xs uppercase tracking-wider text-gray-500 hover:text-gray-300 transition-colors py-2"
+              >
+                <span>Recently handled · {handled.length}</span>
+                <span aria-hidden>{showHandled ? '▾' : '▸'}</span>
+              </button>
+              {showHandled && (
+                <div className="flex flex-col gap-3 mt-2 opacity-70">
+                  {handled.map((anomaly) => (
+                    <AnomalyRow
+                      key={anomaly.id}
+                      anomaly={anomaly}
+                      subredditName={state.subredditName}
+                      onDismiss={() => handleDismiss(anomaly)}
+                      onAction={() => setDrillDown(anomaly)}
+                      onReactivate={async () => {
+                        await reactivate(anomaly);
+                        show('Anomaly re-activated', 'info');
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>

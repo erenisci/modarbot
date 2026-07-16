@@ -37,7 +37,7 @@ Each detector emits an `AnomalyEvent` with severity (0–1) and a plain-English 
 A custom post in your mod-only area:
 
 - **Status orb** — single 🟢 / 🟡 / 🔴 glance at sub health
-- **Live anomaly feed** — last 10 events, severity bars, time-ago, one-tap **Investigate** / **Dismiss**
+- **Live anomaly feed** — active events with severity bars and time-ago, one-tap **Investigate** / **Dismiss**; dismissed items fold into a collapsible _Recently handled_ list you can re-investigate
 - **Drill-down** — surfaces the offending accounts and posts with one-click bulk actions (ban all, remove all, lock thread) — _always with an explicit mod confirmation_
 - **Settings** — per-signal sensitivity sliders, mute schedules, alert channel
 
@@ -55,10 +55,13 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 
 ## Tech stack
 
-- **Devvit Web** — React 19 + Vite + Tailwind 4 (webview)
-- **Hono** server + tRPC v11 (serverless Node 22)
-- **Devvit Realtime** — anomaly publish/subscribe per sub
-- **Devvit Redis** — 24h rolling event log + EWMA baselines
+- **Devvit Web** — React 19 + Vite + Tailwind 4, running in a Reddit-hosted webview
+- **Hono** JSON API on serverless Node 22, types shared end-to-end via `src/shared`
+- **Devvit Realtime** — per-sub anomaly publish/subscribe bus
+- **Devvit Redis** — 24h rolling event log + rolling baselines
+- **Devvit Scheduler** — periodic vote-pattern snapshots (`*/2 * * * *`)
+
+No AI. No external APIs. No outbound HTTP. Everything runs on Devvit infrastructure at zero marginal cost.
 
 ## Repo layout
 
@@ -85,9 +88,9 @@ When severity crosses your threshold, the team gets a modmail or push notificati
 
 ## Status
 
-🚧 In active development for the [Reddit Mod Tools and Migrated Apps Hackathon 2026](https://mod-tools-migration.devpost.com/) (deadline **May 27, 2026**).
+✅ Submitted to the [Reddit Mod Tools and Migrated Apps Hackathon 2026](https://mod-tools-migration.devpost.com/) in the _New Mod Tool_ category.
 
-App listing will go live at `developers.reddit.com/apps/modarbot` once published.
+Published on the App Directory: **[developers.reddit.com/apps/modarbot](https://developers.reddit.com/apps/modarbot)**.
 
 ## License
 

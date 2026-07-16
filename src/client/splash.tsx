@@ -49,9 +49,13 @@ export const Splash = () => {
 
   return (
     <div className="flex relative flex-col justify-center items-center min-h-screen gap-3 bg-gray-950 text-gray-100">
-      <div
-        className={`w-20 h-20 rounded-full ${ORB_BG[orb]} shadow-[0_0_50px] transition-all duration-500`}
-      />
+      <div className="relative flex items-center justify-center w-28 h-28">
+        <span className="absolute inset-0 rounded-full border border-dashed border-gray-700/60" />
+        <span className="absolute inset-3 rounded-full border border-dashed border-gray-700/40" />
+        <div
+          className={`w-20 h-20 rounded-full ${ORB_BG[orb]} shadow-[0_0_50px] transition-all duration-500`}
+        />
+      </div>
       <div className="flex flex-col items-center gap-1">
         <h1 className="text-xl font-bold">ModarBot Watchtower</h1>
         <p className="text-sm text-gray-300">
@@ -65,6 +69,9 @@ export const Splash = () => {
       >
         Open Watchtower
       </button>
+      <p className="absolute bottom-4 text-xs text-gray-600">
+        Catch the raid before it catches you
+      </p>
     </div>
   );
 };
